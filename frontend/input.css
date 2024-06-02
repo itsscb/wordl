@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.logo {
+  @apply absolute;
+}
+
+.logo-fadein-right {
+  position:relative;
+  animation: logo-fadein-right 1s ;
+}
+
+.validation-error {
+  @apply border-solid border-error;
+}
+
+@keyframes logo-fadein-right {
+  0% {
+    transform: translateX(-200%);
+    opacity: 0;
+  }
+  70%{
+    transform: translateX(0);
+    opacity: 0.7;
+  }
+  80%{
+    opacity: 1;
+  }
+  90%{
+    opacity: 0.8;
+  }
+  100%{
+    opacity: 1;
+  }
+}
+
+
+.logo-fadein-left {
+  position: relative;
+  animation: logo-fadein-left 1s;
+}
+
+@keyframes logo-fadein-left {
+  0% {
+    transform: translateX(500%);
+    opacity: 0;
+  }
+  70%{
+    opacity: 0.7;
+  }
+  80%{
+    transform: translateX(0);
+    opacity: 1;
+  }
+  90%{
+    opacity: 0.8;
+  }
+  100%{
+    opacity: 1;
+  }
+}
+@keyframes logo-fadein-left {
+  from{
+    left: -200%;
+    opacity: 0.5;
+  }
+  to{
+    left: 0;
+    opacity: 1;
+  }
+}
+
+
+.fade-in{
+  position:relative;
+animation:fadein 0.4s}
+@keyframes fadein{
+  from{
+  left:200%;
+opacity:0;
+} to{
+left:0;
+opacity:1}
+}
+
+.fade-out{
+  position:relative;
+animation:fadeout 0.4s}
+@keyframes fadeout{
+  from{
+  left:0;
+opacity:0
+} to{
+left:-200%;
+opacity:1}
+}
+
+.mail-animation {
+  position:relative;
+  animation:mail-animation 2s infinite;
+}
+@keyframes mail-animation {
+  0% {
+    left: -20%;
+    opacity: 0.5;
+  }
+  20% {
+    opacity: 1;
+  }
+  70%{
+    left: 20%;
+  }
+  80%{
+    opacity: 1;
+  }
+  100%{
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+.cx-date-picker {
+  @apply inline-block relative;
+}
+
+.cx-date-picker[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+
+.text-danger {
+  color: rgba(255, 82, 82,1.0);
+}
+
+.bg-danger {
+  background-color: rgba(255, 82, 82,1.0);
+}
+
+.min-height {
+  min-height: 500px;
+}
+
+.text-tertiary {
+  color: rgba(132, 129, 122,1.0);
+}
+
+.bg-tertriary {
+  background-color: rgba(132, 129, 122,1.0);
+}
+
+.border-primary {
+  border-color: rgba(51,217,178,1.0);
+}
+
+.border-error {
+  border-color: rgba(255, 82, 82,1.0) !important;
+}
+.accent-primary {
+  accent-color: rgba(51, 217, 178,1.0);
+}
+
+.text-primary {
+  color: rgba(51, 217, 178,1.0);
+}
+
+.text-primary-dark {
+  color: rgba(33, 140, 116,1.0);
+}
+
+.bg-primary-dark {
+  background-color: rgba(33, 140, 116,1.0);
+}
+
+.bg-primary {
+  background-color: rgba(51, 217, 178,1.0);
+}
+
+.text-secondary {
+  color: rgba(52, 172, 224,1.0);
+}
+
+.text-secondary-dark {
+  color: rgba(34, 112, 147,1.0);
+}
+
+.bg-secondary-dark {
+  background-color: rgba(34, 112, 147,1.0);
+}
+
+.bg-secondary {
+  background-color: rgba(52, 172, 224,1.0);
+}
+
