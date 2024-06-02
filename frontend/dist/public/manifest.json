@@ -1,0 +1,15 @@
+{
+  "name": "wordl",
+  "short_name": "wordl",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#000",
+  "description": "Wortspiel mit Koepfchen",
+  "categories": [
+    "utilities"
+  ],
+  "icons": [
+    "public/favicon.ico"
+  ],
+  "orientation": "portrait-primary"
+}

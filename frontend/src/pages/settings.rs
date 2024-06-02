@@ -5,6 +5,5 @@ use crate::router::Route;
 
 #[function_component]
 pub fn Settings() -> Html {
-    html! {
-    }
+    html! {}
 }

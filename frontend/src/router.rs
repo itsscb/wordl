@@ -1,4 +1,4 @@
-use crate::pages::{Settings, Home};
+use crate::pages::{Home, Settings};
 
 use yew::{function_component, html, Html};
 use yew_router::prelude::*;
