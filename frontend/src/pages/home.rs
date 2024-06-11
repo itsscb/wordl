@@ -1,7 +1,5 @@
 use yew::prelude::*;
-use yew::{classes, function_component, html, Callback, Html, NodeRef};
-
-use crate::router::Route;
+use yew::{classes, function_component, html, Callback, Html};
 
 use crate::CharStatus;
 
@@ -38,6 +36,9 @@ fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
                         classes.push("border-2");
                         s
                     }
+                    _ => {
+                        ""
+                    },
                 };
                 html!{
            <li
@@ -56,7 +57,7 @@ fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
 #[function_component]
 pub fn Home() -> Html {
     let got_word = "HALLO";
-    let mut submitted_words = yew::use_state(|| vec![]);
+    let submitted_words = yew::use_state(|| vec![]);
     let input = yew::use_state(|| {
         vec![
             "".to_owned(),
@@ -70,7 +71,7 @@ pub fn Home() -> Html {
     let on_submit = {
         let input = input.clone();
         let submitted_words = submitted_words.clone();
-        Callback::from(move |event: MouseEvent| {
+        Callback::from(move |_: MouseEvent| {
             let mut new_items = (*submitted_words).clone();
             new_items.push(crate::compare_strings(&got_word, &input.join("")));
             submitted_words.set(new_items);
@@ -111,9 +112,6 @@ pub fn Home() -> Html {
         })
     };
 
-    // let mut submitted_words = vec![];
-
-    let res = crate::compare_strings(got_word, "HLLAI");
     html! {
         <div
             class={

@@ -1,7 +1,4 @@
-use yew::{classes, function_component, html, Html};
-use yew_router::prelude::Link;
-
-use crate::router::Route;
+use yew::{function_component, html, Html};
 
 #[function_component]
 pub fn Settings() -> Html {
