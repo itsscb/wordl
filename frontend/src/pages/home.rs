@@ -1,19 +1,30 @@
+use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use yew::prelude::*;
 use yew::{classes, function_component, html, Callback, Html};
 
 use crate::CharStatus;
 
 fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
-    let classes = classes!("p-3");
+    let classes = classes!(
+        "bg-gray-700",
+        "w-16",
+        "h-16",
+        "text-center",
+        "py-4",
+        // "justify-center",
+        // // "justify-items-center",
+        // "object-center",
+        // "items-center",
+        // "leading-tight"
+    );
     html! {
             <ul
                 class={
                     classes!(
                         "flex",
                         "flex-row",
-                        "justify-between",
-                        "w-72",
-                        "mx-12"
+                        "gap-8",
+                        "mt-8",
                     )
                 }
             >
@@ -41,12 +52,21 @@ fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
                     },
                 };
                 html!{
-           <li
+               <li
+                    class={
+                        classes!(
+                            "flex",
+                            "items-center"
+                        )
+                    }
+               >
+               <span
                class={
                    classes.clone()
                }
            >
                {text}
+               </span>
            </li>
         }}).collect::<Html>()
         }
@@ -58,136 +78,206 @@ fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
 pub fn Home() -> Html {
     let got_word = "HALLO";
     let submitted_words = yew::use_state(|| vec![]);
-    let input = yew::use_state(|| {
-        vec![
-            "".to_owned(),
-            "".to_owned(),
-            "".to_owned(),
-            "".to_owned(),
-            "".to_owned(),
-        ]
+
+    let node_refs = use_state(|| vec![NodeRef::default(); 5]);
+    let input_values = use_state(|| vec!["".to_string(); 5]);
+    let game_over = use_state(|| false);
+    let game_over_check = {
+        let submitted_words = submitted_words.clone();
+        let game_over = game_over.clone();
+        Callback::from(move |_| {
+            if submitted_words.iter().count() >= 4 {
+                game_over.set(true);
+            }
+        })
+    };
+
+    got_word.chars().enumerate().for_each(|(_, _)| {
+        let input_values = input_values.clone();
+        let mut values = (*input_values).clone();
+        values.push("".to_string());
+
+        let node_refs = node_refs.clone();
+        let mut values = (*node_refs).clone();
+        values.push(NodeRef::default());
     });
 
     let on_submit = {
-        let input = input.clone();
+        let input_values = input_values.clone();
         let submitted_words = submitted_words.clone();
-        Callback::from(move |_: MouseEvent| {
-            let mut new_items = (*submitted_words).clone();
-            new_items.push(crate::compare_strings(&got_word, &input.join("")));
-            submitted_words.set(new_items);
-        })
-    };
-
-    let editing_index = yew::use_state(|| None);
-    let editing_value = yew::use_state(|| String::new());
-
-    let on_click = {
-        let editing_index = editing_index.clone();
-        let editing_value = editing_value.clone();
-        let input = input.clone();
-        Callback::from(move |index: usize| {
-            editing_index.set(Some(index));
-            editing_value.set(input.to_vec()[index].clone());
-        })
-    };
-
-    let on_input = {
-        let editing_value = editing_value.clone();
-        Callback::from(move |value: String| {
-            editing_value.set(value);
-        })
-    };
-
-    let on_blur = {
-        let editing_index = editing_index.clone();
-        let editing_value = editing_value.clone();
-        let input = input.clone();
+        let game_over = game_over.clone();
+        let game_over_check = game_over_check.clone();
         Callback::from(move |_| {
-            if let Some(index) = *editing_index {
-                let mut new_input = input.to_vec();
-                new_input[index] = editing_value.to_uppercase().to_string();
-                input.set(new_input);
+            if *game_over {
+                submitted_words.set(vec![]);
+                // input_values.set(vec![]);
+                game_over.set(false);
+                return;
             }
-            editing_index.set(None);
+            let values: Vec<_> = input_values.iter().map(|value| value.clone()).collect();
+            if !values.iter().all(|v| !v.is_empty()) {
+                return;
+            }
+            let mut new_items = (*submitted_words).clone();
+            new_items.push(crate::compare_strings(&got_word, &values.join("")));
+            submitted_words.set(new_items);
+            game_over_check.emit(MouseEvent::none());
         })
     };
 
-    html! {
-        <div
+    let view = {
+        let node_refs = node_refs.clone();
+        let input_values = input_values.clone();
+        move || {
+            html! {
+                        <div
+                            class={
+                                classes!(
+                                    "flex",
+                                    "flex-col",
+                "mt-[15%]",
+                // "justify-center",
+                // "justify-items-center",
+                "items-center",
+                "h-screen",
+                                )
+                            }
+                        >
+                        <div
+                            class="h-4/6"
+                        >
+                            <form
+                            // onsubmit={on_submit}
+                            >
+                            <div
+                            class={
+                                classes!(
+                                    "flex",
+                                    "flex-row",
+                                    "gap-8",
+                                )
+                            }
+                            >
+                                { node_refs.iter().enumerate().map(|(index, node_ref)| {
+                                    let on_input = {
+                                        let node_ref = node_ref.clone();
+                                        let input_values = input_values.clone();
+                                        Callback::from(move |event: InputEvent| {
+                                            let value = event.data().unwrap();
+                                            let mut values = (*input_values).clone();
+                                            values[index] = value.to_uppercase();
+                                            input_values.set(values);
+                                            if let Some(input) = node_ref.cast::<web_sys::HtmlInputElement>() {
+                                                input.value();
+                                            }
+                                        })
+                                    };
+                                    html! {
+                <div
+                    class="flex gap-8"
+                >
+                                        <input
+                                            ref={node_ref.clone()}
+                                            value={input_values[index].clone()}
+                                            oninput={on_input}
+                            class={
+                                classes!(
+                                    "w-16",
+                                    "h-16",
+                                    "flex-1",
+                                    "text-center",
+                                    // "px-4",
+                                    // "py-2",
+                                    "bg-gray-600"
+                                )
+                            }
+                                        />
+                                        </div>
+                                    }
+                                }).collect::<Html>() }
+                                </div>
+                            </form>
+                { for submitted_words.iter().map(|w| string_to_html(w))}
+                </div>
+                                <button
             class={
                 classes!(
-                    "w-full",
-                    "flex",
-                    "flex-col",
-                    "mt-6",
-                    "input-center"
-                )
-            }
-        >
-        {submitted_words.iter().map(|w| string_to_html(&w)).collect::<Html>()}
-        // <div>{format!("{:?}",res)}</div>
-            // <div
-            //     class={
-            //         classes!(
-            //             "w-full",
-            //             "h-16"
-            //         )
-            //     }
-            // >{
-            //     got_word
-            // }</div>
-            <ul
-                class={
-                    classes!(
-                        "flex",
-                        "flex-row",
-                        "justify-between",
-                        "w-72",
-                        "h-16",
-                        "mx-12"
-                    )
-                }
-            >
-            { input.to_vec().iter().enumerate().map(|(index, item)| {
-                if let Some(editing_idx) = *editing_index {
-                    if editing_idx == index {
-                        html! {
-                            <li
-                            class="w-12 bg-gray-600 flex items-center justify-center"
-                            >
-                                <input
-                                    class="bg-gray-600 h-full w-full"
-                                    type="text"
-                                    value={editing_value.to_string()}
-                                    onblur={on_blur.clone()}
-                                    oninput={on_input.reform(|e: InputEvent| e.data().unwrap_or_default())}
-                                />
-                            </li>
-                        }
-                    } else {
-                        html! { <li
-
-                            class="w-4 bg-gray-600"
-                            >{item}</li> }
+                    "w-72",
+                    "h-16",
+                    // "mt-24",
+                    "text-2xl",
+                    "font-bold",
+                    "rounded-xl",
+                    "bg-green-700",
+                                    )
+                                }
+                                onclick={on_submit} type="submit">
+                                {
+                                    if *game_over {
+                                        "Play again"
+                                        }
+                                        else {
+                                            "Submit"
+                                        }
+                                }
+                                </button>
+                        </div>
                     }
-                } else {
-                    html! { <li
-                            class="w-12 bg-gray-600"
-                         onclick={on_click.reform(move |_| index)}>{item}</li> }
-                }
-            }).collect::<Html>() }
-        </ul>
-        //     <input
-        //         value={got_word}
-        //         type="text"
-        //         class={
-        //             classes!(
-        //                 "w-full",
-        //                 "h-16"
-        //             )
-        //         }
-        //     />
-            <button onclick={on_submit}>{"Submit"}</button>
-        </div>
-    }
+        }
+    };
+
+    view()
+    // html! {
+    // <div
+    //     class={
+    //         classes!(
+    // "mt-[15%]",
+    // "flex",
+    // "flex-col",
+    // "justify-center",
+    // "items-center"
+    //         )
+    //     }
+    // >
+    // <div
+    //     class={
+    //         classes!(
+    //             "flex",
+    //             "flex-row",
+    //             "gap-8"
+    //         )
+    //     }
+    // >
+    // {view()}
+    // { for input.iter().map(|i| {
+    //     html!{
+    //         <input
+    //             class={
+    //                 classes!(
+    //                     "w-16",
+    //                     "h-16",
+    //                     "bg-gray-600"
+    //                 )
+    //             }
+    //             value={<std::string::String as Clone>::clone(&*i)}
+    //         />
+    //     }
+    // })}
+    // </div>
+    // <InputString value={"     ".to_string()}/>
+    // <button
+    //     class={
+    //         classes!(
+    //             "w-72",
+    //             "h-16",
+    //             "mt-24",
+    //             "text-2xl",
+    //             "font-bold",
+    //             "rounded-xl",
+    //             "bg-green-700",
+    //         )
+    //     }
+    //  onclick={on_submit}>{"Submit"}</button>
+    // </div>
+    // }
 }

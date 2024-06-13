@@ -2,6 +2,8 @@ pub mod pages;
 pub mod router;
 pub mod storage;
 
+mod input;
+
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
