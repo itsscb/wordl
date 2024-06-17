@@ -31,10 +31,10 @@
         "aarch64-darwin" # 64-bit ARM macOS
       ];
 
-      # rustTarget = nixpkgs.pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
-      #       extensions = [ "rust-src" "rustup" "rust-analyzer" "rust-std" ];
-      #       targets = [ "x86_64-unknown-linux-gnu" "wasm32-unknown-unknown" ];
-      #     });
+      rustTarget = nixpkgs.pkgs.rust-bin.selectLatestNightlyWith (toolchain: toolchain.default.override {
+            extensions = [ "clippy" "rust-src" "rustup" "rust-analyzer" "rust-std" ];
+            targets = [ "x86_64-unknown-linux-gnu" "wasm32-unknown-unknown" ];
+          });
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
@@ -45,17 +45,18 @@
       # Development environment output
       devShells = forAllSystems ({ pkgs }: {
         default = pkgs.mkShell {
-          # buildInputs = [
-          #   rustup
-          # ];
-          # shellHook = ''
-          #   rustup target add wasm32-unknown-unknown
-          # '';
+          buildInputs = [
+            pkgs.rustup
+          ];
+          shellHook = ''
+            rustup target add wasm32-unknown-unknown
+          '';
           # The Nix packages provided in the environment
           packages = (with pkgs; [
             # The package provided by our custom overlay. Includes cargo, Clippy, cargo-fmt,
             # rustdoc, rustfmt, and other tools.
             rust-analyzer
+            rustup
             clippy
             trunk
             tailwindcss

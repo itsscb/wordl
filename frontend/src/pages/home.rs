@@ -135,7 +135,7 @@ pub fn Home() -> Html {
                                 classes!(
                                     "flex",
                                     "flex-col",
-                "mt-[15%]",
+                "mt-32",
                 // "justify-center",
                 // "justify-items-center",
                 "items-center",
