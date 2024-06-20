@@ -1,28 +1,34 @@
-<!DOCTYPE html><html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>wordl</title>
-    <link rel="stylesheet" href="/styles-c6f37c6c035dd718.css" integrity="sha384-3znA5KVukwAIas4xqxGrF5Yz-CYI4o_u_IAsBcjd4DyX6HtdRioOVuQVL4yDPfwE">
+    <link rel="stylesheet" href="/styles-2541dfb893d8d665.css" integrity="sha384&#x2D;gBtRF8AZNuyiqW77oeeQ3vvVnN7LannIbfF4tCrknbd7ZGl4KDroyDlBfuhmsLaX"/>
     <!-- <link data-trunk href="./assets/favicon.ico" rel="icon" type="image/x-icon"> -->
      
-    <link rel="manifest" href="public/manifest.json">
+    <link rel="manifest" href="public/manifest.json" />
   
-<link rel="preload" href="/wordl-frontend-ba8a8c3611452b2257c72576f54daee125e9a55919260fff0152bcc3eff27f90cf4422c311f373a4a3a266b893a39508_bg.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" integrity="sha384-uoqMNhFFKyJXxyV29U2u4SXppVkZJg__AVK8w-_yf5DPRCLDEfNzpKOiZriTo5UI">
-<link rel="modulepreload" href="/wordl-frontend-ba8a8c3611452b2257c72576f54daee125e9a55919260fff0152bcc3eff27f90cf4422c311f373a4a3a266b893a39508.js" crossorigin="anonymous" integrity="sha384-PzjBdr3VThShLF4gaardMp0iZ7CfYcOfPugtyzfDAgH9Z8nbnArIuo1uprXYTYaM"></head>
+<link rel="modulepreload" href="/wordl-frontend-a1b71450da2265b8.js" crossorigin=anonymous integrity="sha384-lCKxpqYFihtfKUog+k83kRnG1N1v5JE5CaAiTC/Apm3M3Hvxxn0FUyoXkM3bbSo6">
+<link rel="preload" href="/wordl-frontend-a1b71450da2265b8_bg.wasm" crossorigin=anonymous integrity="sha384-UOjNvsaX7uaz9yHJMZWoiXnDY6ObdYN/QnkGqftc40ckJNpjoQtxbpSM/wNYSaF1" as="fetch" type="application/wasm"></head>
   <body class="bg-black text-white">
   
+<script type="module" nonce="aMTke2vqVKGhp2qgu8I1ag==">
+import init, * as bindings from '/wordl-frontend-a1b71450da2265b8.js';
+const wasm = await init('/wordl-frontend-a1b71450da2265b8_bg.wasm');
 
 
-<script type="module">
-import init, * as bindings from '/wordl-frontend-ba8a8c3611452b2257c72576f54daee125e9a55919260fff0152bcc3eff27f90cf4422c311f373a4a3a266b893a39508.js';
-init('/wordl-frontend-ba8a8c3611452b2257c72576f54daee125e9a55919260fff0152bcc3eff27f90cf4422c311f373a4a3a266b893a39508_bg.wasm');
 window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script><script>"use strict";
 
 (function () {
 
     const address = '{{__TRUNK_ADDRESS__}}';
+    const base = '{{__TRUNK_WS_BASE__}}';
     let protocol = '';
     protocol =
         protocol
@@ -30,7 +36,7 @@ window.wasmBindings = bindings;
             : window.location.protocol === 'https:'
                 ? 'wss'
                 : 'ws';
-    const url = protocol + '://' + address + '/_trunk/ws';
+    const url = protocol + '://' + address + base + '.well-known/trunk/ws';
 
     class Overlay {
         constructor() {
@@ -146,4 +152,5 @@ window.wasmBindings = bindings;
     new Client(url).start();
 
 })()
-</script></body></html>
+</script></body>
+</html>
