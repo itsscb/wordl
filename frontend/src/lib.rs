@@ -35,19 +35,16 @@ fn compare_strings(s1: &str, s2: &str) -> Vec<CharStatus<String>> {
     }
 
     for (res, c2) in result.iter_mut().zip(s2.chars()) {
-        match res {
-            CharStatus::Unknown => {
-                let c1_count = s1_char_count.get(&c2).unwrap_or(&0);
-                let c2_count = s2_char_count.get(&c2).unwrap_or(&0);
+        if res == &CharStatus::Unknown {
+            let c1_count = s1_char_count.get(&c2).unwrap_or(&0);
+            let c2_count = s2_char_count.get(&c2).unwrap_or(&0);
 
-                if *c1_count > 0 && c1_count > c2_count {
-                    *res = CharStatus::Contained(c2.to_string());
-                    *s2_char_count.entry(c2).or_insert(0) += 1;
-                } else {
-                    *res = CharStatus::NotContained(c2.to_string());
-                }
+            if *c1_count > 0 && c1_count > c2_count {
+                *res = CharStatus::Contained(c2.to_string());
+                *s2_char_count.entry(c2).or_insert(0) += 1;
+            } else {
+                *res = CharStatus::NotContained(c2.to_string());
             }
-            _ => {}
         }
     }
 

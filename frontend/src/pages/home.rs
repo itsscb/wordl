@@ -77,7 +77,7 @@ fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
 #[function_component]
 pub fn Home() -> Html {
     let got_word = "HALLO";
-    let submitted_words = yew::use_state(|| vec![]);
+    let submitted_words = yew::use_state(std::vec::Vec::new);
 
     let node_refs = use_state(|| vec![NodeRef::default(); 5]);
     let input_values = use_state(|| vec!["".to_string(); 5]);
@@ -92,7 +92,7 @@ pub fn Home() -> Html {
         })
     };
 
-    got_word.chars().enumerate().for_each(|(_, _)| {
+    got_word.chars().for_each(|_| {
         let input_values = input_values.clone();
         let mut values = (*input_values).clone();
         values.push("".to_string());
@@ -114,12 +114,12 @@ pub fn Home() -> Html {
                 game_over.set(false);
                 return;
             }
-            let values: Vec<_> = input_values.iter().map(|value| value.clone()).collect();
+            let values: Vec<_> = input_values.iter().cloned().collect();
             if !values.iter().all(|v| !v.is_empty()) {
                 return;
             }
             let mut new_items = (*submitted_words).clone();
-            new_items.push(crate::compare_strings(&got_word, &values.join("")));
+            new_items.push(crate::compare_strings(got_word, &values.join("")));
             submitted_words.set(new_items);
             game_over_check.emit(MouseEvent::none());
         })
@@ -197,7 +197,7 @@ pub fn Home() -> Html {
                                 }).collect::<Html>() }
                                 </div>
                             </form>
-                { for submitted_words.iter().map(|w| string_to_html(w))}
+                { for submitted_words.iter().map(string_to_html)}
                 </div>
                                 <button
             class={
