@@ -1,13 +1,20 @@
-use axum::Router;
+use axum::{routing::get, Router};
+use rand::seq::SliceRandom;
 use tower_http::services::ServeDir;
 
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
     let router = Router::new()
         // .route("/", get(hello_world))
-        .nest_service("/", ServeDir::new("frontend/dist"));
+        .nest_service("/", ServeDir::new("frontend/dist"))
+        .route("/word", get(word));
 
     Ok(router.into())
+}
+
+async fn word() -> String {
+    let mut rng = rand::thread_rng();
+    WORDS.choose(&mut rng).unwrap().to_string()
 }
 
 static WORDS: &[&str; 5921] = &[
