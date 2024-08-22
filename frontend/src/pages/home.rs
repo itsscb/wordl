@@ -1,4 +1,5 @@
-use gloo_console::log;
+// use gloo_console::log;
+use tracing::{debug, error, info};
 use gloo_net::http::Request;
 use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
@@ -11,6 +12,7 @@ use yew::{classes, function_component, Callback, Html};
 use crate::CharStatus;
 
 static NEW_WORD_URI: &str = "https://wordl.shuttleapp.rs/word";
+static MAX_TRIES: usize = 5;
 
 fn set_focus(index: usize) {
     if let Some(w) = web_sys::window() {
@@ -100,114 +102,137 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
 #[derive(Serialize, Deserialize, Debug)]
 struct Word(String);
 
+#[allow(dead_code)]
 fn get_word(handle: UseStateHandle<String>) {
     use_effect_with((), move |()| {
-        // let word = handle.clone();
         wasm_bindgen_futures::spawn_local(async move {
-            log!("retrieving word");
+            info!("retreiving word");
             let res = Request::get(NEW_WORD_URI).send().await;
-            log!(format!("RESPONSE: {res:?}"));
+            debug!(RESULT = format!("{res:?}"));
             match res {
                 Ok(r) => {
-                    log!(format!("{r:?}"));
-                    match r.body() {
-                        Some(j) => {
-                            let j = j.to_string();
-                            let data = format!("{j:?}");
-                            log!(&data);
-                            handle.set(data);
+                    debug!(RESPONSE = format!("{r:?}"));
+                    match r.text().await {
+                        Ok(w) => {
+                            debug!(WORD = &w);
+                            handle.set(w);
                         }
-                        None => log!("no body"),
+                        Err(e) => error!(ERROR = format!("{e:?}"),"failed to get request body"),
                     }
                 }
-                Err(e) => log!(format!("FETCH: {e:?}")),
+                Err(e) => error!(ERROR = format!("{e:?}"),"failed to retreive word"),
             }
-            // let res: Word = Request::get(NEW_WORD_URI).send().await.unwrap().json().await.unwrap();
-            // log!(res);
-            // handle.set(res.0);
-            // if let Ok(r) = res {
-            //     if let Some(w) = r.body() {
-
-            //         word.set(w.to_string());
-            //     }
-            // }
         });
         || ()
     });
 }
 
+fn fetch_new_word(
+    word: &UseStateHandle<String>,
+    loading: &UseStateHandle<bool>,
+    submitted_words: &UseStateHandle<Vec<Vec<CharStatus<String>>>>,
+    input_values: &UseStateHandle<Vec<String>>,
+    game_over: &UseStateHandle<bool>,
+    length: &UseStateHandle<usize>,
+    node_refs: &UseStateHandle<Vec<NodeRef>>,
+) {
+    let handle = word.clone();
+    let loading = loading.clone();
+    let submitted_words = submitted_words.clone();
+    let input_values = input_values.clone();
+    let game_over = game_over.clone();
+    let length = length.clone();
+    let node_refs = node_refs.clone();
+
+    wasm_bindgen_futures::spawn_local(async move {
+        debug!("retrieving word");
+        let res = Request::get(NEW_WORD_URI).send().await;
+        debug!(RESULT = format!("{res:?}"));
+        match res {
+            Ok(r) => {
+                debug!(RESPONSE = format!("{r:?}"));
+                match r.text().await {
+                    Ok(w) => {
+                        debug!(WORD = &w);
+                        length.set(w.len());
+                        node_refs.set(vec![NodeRef::default(); w.len()]);
+                        input_values.set(vec![String::new(); w.len()]);
+                        handle.set(w.to_uppercase());
+                        submitted_words.set(Vec::with_capacity(MAX_TRIES));
+                        game_over.set(false);
+                        loading.set(false);
+                    }
+                    Err(e) => error!(ERROR = format!("{e:?}"), "failed to get request body"),
+                }
+            }
+            Err(e) => error!(ERROR = format!("{e:?}"), "failed to retrieve word"),
+        }
+    });
+}
+
 #[function_component]
 pub fn Home() -> Html {
-    // let got_word = "HALLO";
-    // let length = got_word.len();
-    log!("STARTING");
 
     let word: UseStateHandle<String> = use_state(String::new);
+    let loading: UseStateHandle<bool> = use_state(|| true);
 
-    // get_word(word.clone());
+    let length = use_state(|| 0usize);
+    let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> =
+        use_state(|| std::vec::Vec::with_capacity(MAX_TRIES));
+
+    let node_refs = use_state(|| vec![NodeRef::default(); 10]);
+    let input_values: UseStateHandle<Vec<String>> = use_state(|| vec![String::new(); *length]);
+    let game_over = use_state(|| false);
 
     {
         let handle = word.clone();
+        let loading = loading.clone();
+
+        let submitted_words = submitted_words.clone();
+        let input_values = input_values.clone();
+        let game_over = game_over.clone();
+        let length = length.clone();
+        let node_refs = node_refs.clone();
+
         use_effect_with((), move |()| {
-            // let word = handle.clone();
             wasm_bindgen_futures::spawn_local(async move {
-                log!("retrieving word");
+                debug!("retreiving word");
                 let res = Request::get(NEW_WORD_URI).send().await;
-                log!(format!("RESPONSE: {res:?}"));
+                debug!(RESULT = format!("{res:?}"));
                 match res {
-                    // Ok(r) => {
-                    //     log!(format!("{r:?}"));
-                    //     match r.json::<Word>().await {
-                    //         Ok(j) => {
-                    //             let data = format!("{j:?}");
-                    //             log!(&data);
-                    //             handle.set(data);
-                    //         },
-                    //         Err(e) => log!(format!("{e:?}")),
-                    //     }
-                    // },
                     Ok(r) => {
-                        log!(format!("{r:?}"));
-                        match r.body() {
-                            Some(j) => {
-                                let j = j.to_string();
-                                let data = format!("{j:?}");
-                                log!(&data);
-                                handle.set(data);
+                        debug!(RESPONSE = format!("{r:?}"));
+                        match r.text().await {
+                            Ok(w) => {
+                                debug!(WORD = &w);
+                                length.set(w.len());
+                                node_refs.set(vec![NodeRef::default(); w.len()]);
+                                input_values.set(vec![String::new(); w.len()]);
+                                handle.set(w.to_uppercase());
+                                submitted_words.set(std::vec::Vec::with_capacity(MAX_TRIES));
+                                game_over.set(false);
+                                loading.set(false);
+                
                             }
-                            None => log!("no body"),
+                            Err(e) => error!(ERROR = format!("{e:?}"),"failed to get request body"),
                         }
                     }
-                    Err(e) => log!(format!("FETCH: {e:?}")),
+                    Err(e) => error!(ERROR = format!("{e:?}"),"failed to retreive word"),
                 }
-                // let res: Word = Request::get(NEW_WORD_URI).send().await.unwrap().json().await.unwrap();
-                // log!(res);
-                // handle.set(res.0);
-                // if let Ok(r) = res {
-                //     if let Some(w) = r.body() {
-
-                //         word.set(w.to_string());
-                //     }
-                // }
             });
             || ()
         });
     }
-    let length = word.len();
 
-    let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> =
-        use_state(|| std::vec::Vec::with_capacity(length));
-
-    let node_refs = use_state(|| vec![NodeRef::default(); length]);
-    let input_values: UseStateHandle<Vec<String>> = use_state(|| vec![String::new(); length]);
-    let game_over = use_state(|| false);
+    
     let game_over_check = {
         let word = word.clone();
         let submitted_words = submitted_words.clone();
         let iv = input_values.clone();
         let game_over = game_over.clone();
+        let length = length.clone();
         Callback::from(move |_| {
-            if submitted_words.iter().count() >= length - 1
+            if submitted_words.iter().count() >= *length - 1
                 || crate::compare_strings(&word, &iv.join(""))
                     .iter()
                     .all(|v| matches!(v, CharStatus::Match(_)))
@@ -221,12 +246,22 @@ pub fn Home() -> Html {
         let input_values = input_values.clone();
         let submitted_words = submitted_words.clone();
         let game_over = game_over.clone();
+        let length = length.clone();
         let word = word.clone();
+        let node_refs = node_refs.clone();
+let loading = loading.clone();
+        
+        
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
-                submitted_words.set(std::vec::Vec::with_capacity(length));
-                input_values.set(vec![String::new(); length]);
-                game_over.set(false);
+                let input_values = input_values.clone();
+                let submitted_words = submitted_words.clone();
+                let game_over = game_over.clone();
+                let length = length.clone();
+                let word = word.clone();
+                let loading = loading.clone();
+                let node_refs = node_refs.clone();
+                fetch_new_word(&word, &loading, &submitted_words, &input_values, &game_over, &length, &node_refs);
                 return;
             }
             let values: Vec<_> = input_values.iter().cloned().collect();
@@ -266,7 +301,7 @@ pub fn Home() -> Html {
                         )
                     }
                 >
-                <h1>{(*word).clone()}</h1>
+                // <h1>{(*word).clone()} {" NODE_REFS: "}{node_refs.len()} {" WORD_LEN: "}{*length}</h1>
                 <div
                     class="h-4/6 flex flex-col"
                 >
@@ -285,7 +320,10 @@ pub fn Home() -> Html {
                     }
                 >
                     {
-                        if !*game_over && !word.is_empty() {
+                        if *loading {
+                            html!(<p>{"Loading..."}</p>)
+                        } 
+                        else if !*game_over {
                             node_refs.iter().enumerate().map(|(index, node_ref)| {
                                 let on_input = {
                                     let node_ref = node_ref.clone();
