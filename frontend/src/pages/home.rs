@@ -45,7 +45,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
                         "flex",
                         "flex-row",
                         "gap-4",
-                        "mt-8",
+                        "mt-4",
                         "notranslate",
                     )
                 }
@@ -266,9 +266,9 @@ pub fn Home() -> Html {
                         classes!(
                             "flex",
                             "flex-col",
-                            "mt-12",
+                            "mt-4",
                             "items-center",
-                            "h-screen",
+                            "h-[90vh]",
                         )
                     }
                 >
