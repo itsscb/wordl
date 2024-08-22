@@ -6,24 +6,14 @@ use yew::{classes, function_component, html, Callback, Html};
 
 use crate::CharStatus;
 
-fn check_game_over(words: &[CharStatus<String>]) -> bool {
-    if words.iter().all(|i| matches!(i, CharStatus::Match(_))) {
-        return true;
-    }
-    false
-}
-
 fn set_focus(index: usize) {
-    if let Some(next) = web_sys::window()
-        .expect("no global 'window' exists")
-        .document()
-        .expect("should have a document on window")
-        .query_selector(&format!("[tabindex='{}']", index))
-        .ok()
-        .flatten()
-    {
-        if let Some(e) = next.dyn_ref::<HtmlElement>() {
-            e.focus().ok();
+    if let Some(w) = web_sys::window() {
+        if let Some(d) = w.document() {
+            if let Some(n) = d.query_selector(&format!("[tabindex='{index}']")).ok().flatten() {
+                if let Some(e) = n.dyn_ref::<HtmlElement>() {
+                    e.focus().ok();
+                }
+            }
         }
     }
 }
@@ -47,6 +37,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
                         "flex-row",
                         "gap-4",
                         "mt-8",
+                        "notranslate",
                     )
                 }
             >
@@ -69,7 +60,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
                         classes.push("border-2");
                         s
                     }
-                    _ => {
+                    CharStatus::Unknown => {
                         ""
                     },
                 };
@@ -98,41 +89,33 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
 
 #[function_component]
 pub fn Home() -> Html {
-    let length = 5;
     let got_word = "HALLO";
-    let submitted_words = yew::use_state(std::vec::Vec::new);
+    let length = got_word.len();
+    
+    let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> = use_state(|| std::vec::Vec::with_capacity(length));
 
     let node_refs = use_state(|| vec![NodeRef::default(); length]);
-    let input_values = use_state(|| vec!["".to_string(); length]);
+    let input_values: UseStateHandle<Vec<String>> = use_state(|| vec![String::new(); length]);
     let game_over = use_state(|| false);
     let game_over_check = {
         let submitted_words = submitted_words.clone();
+        let iv = input_values.clone();
         let game_over = game_over.clone();
         Callback::from(move |_| {
-            if submitted_words.iter().count() >= length - 1 {
+            if submitted_words.iter().count() >= length - 1 || crate::compare_strings(got_word, &iv.join("")).iter().all(|v| matches!(v, CharStatus::Match(_))){               
                 game_over.set(true);
             }
         })
     };
 
-    got_word.chars().for_each(|_| {
-        let input_values = input_values.clone();
-        let mut values = (*input_values).clone();
-        values.push("".to_string());
-
-        let node_refs = node_refs.clone();
-        let mut values = (*node_refs).clone();
-        values.push(NodeRef::default());
-    });
-
     let on_submit = {
         let input_values = input_values.clone();
         let submitted_words = submitted_words.clone();
         let game_over = game_over.clone();
-        let game_over_check = game_over_check.clone();
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
-                submitted_words.set(vec![]);
+                submitted_words.set(std::vec::Vec::with_capacity(length));
+                input_values.set(vec![String::new();length]);
                 game_over.set(false);
                 return;
             }
@@ -148,128 +131,120 @@ pub fn Home() -> Html {
     };
 
     let on_enter = {
-        let input_values = input_values.clone();
-        let submitted_words = submitted_words.clone();
-        let game_over = game_over.clone();
-        let game_over_check = game_over_check.clone();
+        let on_submit = on_submit.clone();
+        
         Callback::from(move |e: KeyboardEvent| {
             if e.key() == "Enter" {
-                if *game_over {
-                    submitted_words.set(vec![]);
-                    game_over.set(false);
-                    return;
+                if let Ok(m) = MouseEvent::new("click") {
+                    on_submit.emit(m);
                 }
-                let values: Vec<_> = input_values.iter().cloned().collect();
-                if !values.iter().all(|v| !v.is_empty()) {
-                    return;
-                }
-                let mut new_items = (*submitted_words).clone();
-                new_items.push(crate::compare_strings(got_word, &values.join("")));
-                submitted_words.set(new_items);
-                game_over_check.emit(KeyboardEvent::none());
             }
         })
     };
 
     let view = {
-        let node_refs = node_refs.clone();
-        let input_values = input_values.clone();
         move || {
             html! {
-                            <div
-                                class={
-                                    classes!(
-                                        "flex",
-                                        "flex-col",
-                    "mt-12",
-                    "items-center",
-                    "h-screen",
-                                    )
-                                }
-                            >
-                            <div
-                                class="h-4/6 flex flex-col"
-                            >
-                                <form
-                                class="order-last mt-8"
-                                >
-                                <div
-                                class={
-                                    classes!(
-                                        "flex",
-                                        "flex-row",
-            "font-bold",
-            "text-lg",
-                                        "gap-4",
-                                    )
-                                }
-                                >
-                                    { node_refs.iter().enumerate().map(|(index, node_ref)| {
-                                        let on_input = {
-                                            let node_ref = node_ref.clone();
-                                            let next_index = index +1;
-                                            let input_values = input_values.clone();
-                                            Callback::from(move |event: InputEvent| {
-                                                let value = event.data().unwrap();
-                                                let mut values = (*input_values).clone();
-                                                values[index] = value.to_uppercase();
-                                                input_values.set(values);
-                                                if let Some(input) = node_ref.cast::<web_sys::HtmlInputElement>() {
-                                                    input.value();
-                                                    set_focus(next_index);
-                                                }
-                                            })
-                                        };
-                                        let on_enter = on_enter.clone();
-                                        html! {
-                                            <input
-                                            onkeypress={on_enter}
-                                                tabindex={index.to_string()}
-                                                ref={node_ref.clone()}
-                                                value={input_values[index].clone()}
-                                                oninput={on_input}
-                                class={
-                                    classes!(
-                                        "w-16",
-                                        "h-16",
-                                        "text-center",
-                                        "bg-gray-600"
-                                    )
-                                }
-                                            />
+                <div
+                    class={
+                        classes!(
+                            "flex",
+                            "flex-col",
+                            "mt-12",
+                            "items-center",
+                            "h-screen",
+                        )
+                    }
+                >
+                <div
+                    class="h-4/6 flex flex-col"
+                >
+                <form
+                class="order-last mt-8"
+                >
+                <div
+                    class={
+                        classes!(
+                            "flex",
+                            "flex-row",
+                            "font-bold",
+                            "text-lg",
+                            "gap-4",
+                        )
+                    }
+                >
+                    { 
+                        if *game_over {    
+                            html!(<div></div>)
+                        } else {
+                            node_refs.iter().enumerate().map(|(index, node_ref)| {
+                                let on_input = {
+                                    let node_ref = node_ref.clone();
+                                    let next_index = index +1;
+                                    let input_values = input_values.clone();
+                                    Callback::from(move |event: InputEvent| {
+                                        if let Some(value) = event.data() {
+                                            let mut values = (*input_values).clone();
+                                            values[index] = value.to_uppercase();
+                                            input_values.set(values);
+                                            if let Some(input) = node_ref.cast::<web_sys::HtmlInputElement>() {
+                                                input.value();
+                                                set_focus(next_index);
+                                            }
                                         }
-                                    }).collect::<Html>() }
-                                    </div>
-                                </form>
-                                <div class="!order-first">
-                    { for submitted_words.iter().map(|e| {string_to_html(e)})}
-                    </div>
-                    </div>
-                                    <button
-                                    tabindex={"5"}
-                class={
-                    classes!(
-                        "w-72",
-                        "h-16",
-                        "text-2xl",
-                        "font-bold",
-                        "rounded-xl",
-                        "bg-green-700",
-                        "order-last",
-                                        )
-                                    }
-                                    onclick={on_submit} type="submit">
-                                    {
-                                        if *game_over {
-                                            "Play again"
-                                            }
-                                            else {
-                                                "Submit"
-                                            }
-                                    }
-                                    </button>
-                            </div>
+                                    })
+                                };
+                                html! {
+                                    <input
+                                        onkeypress={on_enter.clone()}
+                                            tabindex={index.to_string()}
+                                            ref={node_ref.clone()}
+                                            value={input_values[index].clone()}
+                                            oninput={on_input}
+                                        class={
+                                            classes!(
+                                                "w-16",
+                                                "h-16",
+                                                "text-center",
+                                                "bg-gray-600"
+                                            )
+                                        }
+                                    />
+                                }
+                            }).collect::<Html>() 
                         }
+                    }
+                </div>
+                </form>
+                <div class="!order-first">
+                { for submitted_words.iter().map(|e| {string_to_html(e)})}
+                </div>
+                    </div>
+                        <button
+                        tabindex={"5"}
+                        class={
+                            classes!(
+                                "w-72",
+                                "h-16",
+                                "text-2xl",
+                                "font-bold",
+                                "rounded-xl",
+                                "bg-green-700",
+                                "order-last",
+                            )
+                        }
+                        onclick={on_submit} type="submit">
+                        {
+                            if *game_over {
+                                "Play again"
+                            }
+                            else {
+                                "Submit"
+                            }
+                        }
+                        </button>
+                </div>
+            }
         }
     };
 

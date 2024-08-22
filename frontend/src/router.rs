@@ -2,7 +2,7 @@ use crate::pages::{Home, Settings};
 
 use yew::{function_component, html, Html};
 use yew_router::prelude::*;
-#[derive(Clone, Routable, PartialEq)]
+#[derive(Clone, Routable, PartialEq, Eq)]
 pub enum Route {
     #[at("/")]
     #[not_found]
@@ -11,6 +11,7 @@ pub enum Route {
     Settings,
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn route(routes: Route) -> Html {
     match routes {
         Route::Home => {

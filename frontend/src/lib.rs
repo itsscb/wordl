@@ -1,12 +1,14 @@
 pub mod pages;
 pub mod router;
-pub mod storage;
+// pub mod storage;
 
-mod input;
+// mod input;
 
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 enum CharStatus<T> {
     NotContained(T),
     Contained(T),
