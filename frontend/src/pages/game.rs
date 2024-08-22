@@ -10,6 +10,7 @@ struct Game {
 }
 
 impl Game {
+    #[allow(dead_code)]
     pub fn new(word: String, submitted_words: Vec<Vec<CharStatus<String>>>) -> Self {
         let result = submitted_words.clone().into_iter().last().map_or(GameResult::Lose, |w| if w.iter().all(|v| matches!(v, CharStatus::Match(_))) {
                 GameResult::Win
