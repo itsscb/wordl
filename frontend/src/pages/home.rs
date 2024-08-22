@@ -1,10 +1,16 @@
+use gloo_net::http::Request;
+use gloo_console::log;
+use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use yew::prelude::*;
-use yew::{classes, function_component, html, Callback, Html};
+use yew::{classes, function_component, Callback, Html};
+// use yew::{FetchTask, Request, Response, FetchService};
 
 use crate::CharStatus;
+
+static NEW_WORD_URI: &str = "https://wordl.shuttleapp.rs/word";
 
 fn set_focus(index: usize) {
     if let Some(w) = web_sys::window() {
@@ -87,10 +93,93 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
     }
 }
 
+#[derive(Serialize,Deserialize, Debug)]
+struct Word(String);
+
+fn get_word(handle: UseStateHandle<String>) {
+    use_effect_with((), move |()| {
+        // let word = handle.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            log!("retrieving word");
+            let res = Request::get(NEW_WORD_URI).send().await;
+            log!(format!("RESPONSE: {res:?}"));
+            match res {
+                Ok(r) => {
+                    log!(format!("{r:?}"));
+                    match r.body() {
+                        Some(j) => {
+                            let j = j.to_string();
+                            let data = format!("{j:?}");
+                            log!(&data);
+                            handle.set(data);
+                        },
+                        None => log!("no body"),
+                    }
+                },
+                Err(e) => log!(format!("FETCH: {e:?}")),
+            }
+            // let res: Word = Request::get(NEW_WORD_URI).send().await.unwrap().json().await.unwrap();
+            // log!(res);
+            // handle.set(res.0);
+            // if let Ok(r) = res {
+            //     if let Some(w) = r.body() {
+
+            //         word.set(w.to_string());
+            //     }
+            // }
+        });
+        || ()
+    });
+}
+
 #[function_component]
 pub fn Home() -> Html {
-    let got_word = "HALLO";
-    let length = got_word.len();
+    
+    // let got_word = "HALLO";
+    // let length = got_word.len();
+    log!("STARTING");
+
+    let word: UseStateHandle<String> = use_state(String::new);
+
+    // get_word(word.clone());
+    
+    
+    {
+        let handle = word.clone();
+        use_effect_with((), move |()| {
+        // let word = handle.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            log!("retrieving word");
+            let res = Request::get(NEW_WORD_URI).send().await;
+            log!(format!("RESPONSE: {res:?}"));
+            match res {
+                Ok(r) => {
+                    log!(format!("{r:?}"));
+                    match r.json::<Word>().await {
+                        Ok(j) => {
+                            let data = format!("{j:?}");
+                            log!(&data);
+                            handle.set(data);
+                        },
+                        Err(e) => log!(format!("{e:?}")),
+                    }
+                },
+                Err(e) => log!(format!("FETCH: {e:?}")),
+            }
+            // let res: Word = Request::get(NEW_WORD_URI).send().await.unwrap().json().await.unwrap();
+            // log!(res);
+            // handle.set(res.0);
+            // if let Ok(r) = res {
+            //     if let Some(w) = r.body() {
+
+            //         word.set(w.to_string());
+            //     }
+            // }
+        });
+        || ()
+    });
+}
+    let length = word.len();
     
     let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> = use_state(|| std::vec::Vec::with_capacity(length));
 
@@ -98,11 +187,12 @@ pub fn Home() -> Html {
     let input_values: UseStateHandle<Vec<String>> = use_state(|| vec![String::new(); length]);
     let game_over = use_state(|| false);
     let game_over_check = {
+        let word = word.clone();
         let submitted_words = submitted_words.clone();
         let iv = input_values.clone();
         let game_over = game_over.clone();
         Callback::from(move |_| {
-            if submitted_words.iter().count() >= length - 1 || crate::compare_strings(got_word, &iv.join("")).iter().all(|v| matches!(v, CharStatus::Match(_))){               
+            if submitted_words.iter().count() >= length - 1 || crate::compare_strings(&word, &iv.join("")).iter().all(|v| matches!(v, CharStatus::Match(_))){               
                 game_over.set(true);
             }
         })
@@ -112,6 +202,7 @@ pub fn Home() -> Html {
         let input_values = input_values.clone();
         let submitted_words = submitted_words.clone();
         let game_over = game_over.clone();
+        let word = word.clone();
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
                 submitted_words.set(std::vec::Vec::with_capacity(length));
@@ -124,7 +215,7 @@ pub fn Home() -> Html {
                 return;
             }
             let mut new_items = (*submitted_words).clone();
-            new_items.push(crate::compare_strings(got_word, &values.join("")));
+            new_items.push(crate::compare_strings(&word, &values.join("")));
             submitted_words.set(new_items);
             game_over_check.emit(MouseEvent::none());
         })
@@ -156,6 +247,7 @@ pub fn Home() -> Html {
                         )
                     }
                 >
+                <h1>{(*word).clone()}</h1>
                 <div
                     class="h-4/6 flex flex-col"
                 >
@@ -174,9 +266,7 @@ pub fn Home() -> Html {
                     }
                 >
                     { 
-                        if *game_over {    
-                            html!(<div></div>)
-                        } else {
+                        if !*game_over && !word.is_empty() {
                             node_refs.iter().enumerate().map(|(index, node_ref)| {
                                 let on_input = {
                                     let node_ref = node_ref.clone();
@@ -212,6 +302,8 @@ pub fn Home() -> Html {
                                     />
                                 }
                             }).collect::<Html>() 
+                        } else {
+                            html!(<div></div>)
                         }
                     }
                 </div>

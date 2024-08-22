@@ -1,13 +1,22 @@
 use axum::{routing::get, Router};
 use rand::seq::SliceRandom;
 use tower_http::services::ServeDir;
+use tower_http::cors::{Any,CorsLayer};
+use http::Method;
 
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any) // Allow all origins; adjust as necessary
+        .allow_methods(vec![Method::GET]) // Specify allowed methods
+        .allow_headers(Any);
+
     let router = Router::new()
         // .route("/", get(hello_world))
         .nest_service("/", ServeDir::new("frontend/dist"))
-        .route("/word", get(word));
+        .route("/word", get(word))
+        .layer(cors);
 
     Ok(router.into())
 }
