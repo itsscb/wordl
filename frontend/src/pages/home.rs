@@ -266,7 +266,7 @@ pub fn Home() -> Html {
                         classes!(
                             "flex",
                             "flex-col",
-                            "mt-6",
+                            "mt-12",
                             "items-center",
                             "h-screen",
                         )
@@ -324,14 +324,13 @@ pub fn Home() -> Html {
                                        <span
                                        class={
                                         classes!(
-                                            "bg-gray-700",
                                             "w-16",
                                             "h-16",
                                             "text-center",
                                             "py-4",
                                             "font-bold",
                                             "text-lg",
-                                            "bg-red-200",
+                                            "bg-red-600",
                                         )
                                        }
                                    >
