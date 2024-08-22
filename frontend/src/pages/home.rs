@@ -1,13 +1,10 @@
-// use gloo_console::log;
-use tracing::{debug, error, info};
+use tracing::{debug, error};
 use gloo_net::http::Request;
-use serde::{Deserialize, Serialize};
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
-// use yew::{FetchTask, Request, Response, FetchService};
 
 use crate::CharStatus;
 
@@ -41,7 +38,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
         "font-bold",
         "text-lg",
     );
-    html! {
+    html! (
             <ul
                 class={
                     classes!(
@@ -67,7 +64,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
                         s
                     },
                     CharStatus::NotContained(s) => {
-                        classes.push("bg-gray-700");
+                        classes.push("bg-gray-900");
                         classes.push("border-white");
                         classes.push("border-2");
                         s
@@ -96,35 +93,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
         }}).collect::<Html>()
         }
         </ul>
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Word(String);
-
-#[allow(dead_code)]
-fn get_word(handle: UseStateHandle<String>) {
-    use_effect_with((), move |()| {
-        wasm_bindgen_futures::spawn_local(async move {
-            info!("retreiving word");
-            let res = Request::get(NEW_WORD_URI).send().await;
-            debug!(RESULT = format!("{res:?}"));
-            match res {
-                Ok(r) => {
-                    debug!(RESPONSE = format!("{r:?}"));
-                    match r.text().await {
-                        Ok(w) => {
-                            debug!(WORD = &w);
-                            handle.set(w);
-                        }
-                        Err(e) => error!(ERROR = format!("{e:?}"),"failed to get request body"),
-                    }
-                }
-                Err(e) => error!(ERROR = format!("{e:?}"),"failed to retreive word"),
-            }
-        });
-        || ()
-    });
+    )
 }
 
 fn fetch_new_word(
@@ -249,7 +218,7 @@ pub fn Home() -> Html {
         let length = length.clone();
         let word = word.clone();
         let node_refs = node_refs.clone();
-let loading = loading.clone();
+        let loading = loading.clone();
         
         
         Callback::from(move |_e: MouseEvent| {
@@ -271,6 +240,8 @@ let loading = loading.clone();
             let mut new_items = (*submitted_words).clone();
             new_items.push(crate::compare_strings(&word, &values.join("")));
             submitted_words.set(new_items);
+            input_values.set(vec![String::new(); word.len()]);
+            set_focus(0);
             game_over_check.emit(MouseEvent::none());
         })
     };
@@ -295,7 +266,7 @@ let loading = loading.clone();
                         classes!(
                             "flex",
                             "flex-col",
-                            "mt-12",
+                            "mt-6",
                             "items-center",
                             "h-screen",
                         )
@@ -303,7 +274,7 @@ let loading = loading.clone();
                 >
                 // <h1>{(*word).clone()} {" NODE_REFS: "}{node_refs.len()} {" WORD_LEN: "}{*length}</h1>
                 <div
-                    class="h-4/6 flex flex-col"
+                    class="h-5/6 flex flex-col"
                 >
                 <form
                 class="order-last mt-8"
@@ -323,6 +294,56 @@ let loading = loading.clone();
                         if *loading {
                             html!(<p>{"Loading..."}</p>)
                         } 
+                        else if *game_over {
+                            html! (
+                                <div>
+                                <h1>{"WANTED"}</h1>
+                                    <ul
+                                        class={
+                                            classes!(
+                                                "flex",
+                                                "flex-row",
+                                                "gap-4",
+                                                "notranslate",
+                                            )
+                                        }
+                                    >
+                                {
+                                    word.chars().map(|e|{
+                        
+                                        let text = e;
+                                        html!{
+                                       <li
+                                            class={
+                                                classes!(
+                                                    "flex",
+                                                    "items-center"
+                                                )
+                                            }
+                                       >
+                                       <span
+                                       class={
+                                        classes!(
+                                            "bg-gray-700",
+                                            "w-16",
+                                            "h-16",
+                                            "text-center",
+                                            "py-4",
+                                            "font-bold",
+                                            "text-lg",
+                                            "bg-red-200",
+                                        )
+                                       }
+                                   >
+                                       {text}
+                                       </span>
+                                   </li>
+                                }}).collect::<Html>()
+                                }
+                                </ul>
+                                </div>
+                            )
+                        }
                         else if !*game_over {
                             node_refs.iter().enumerate().map(|(index, node_ref)| {
                                 let on_input = {
