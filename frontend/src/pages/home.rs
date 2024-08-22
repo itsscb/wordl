@@ -1,4 +1,3 @@
-use tracing::{debug, error};
 use gloo_net::http::Request;
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
@@ -6,6 +5,7 @@ use web_sys::HtmlElement;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
+use crate::pages::game::GameResult;
 use crate::CharStatus;
 
 static NEW_WORD_URI: &str = "https://wordl.shuttleapp.rs/word";
@@ -27,7 +27,6 @@ fn set_focus(index: usize) {
     }
 }
 
-// fn string_to_html(input: &Vec<CharStatus<String>>) -> Html {
 fn string_to_html(input: &[CharStatus<String>]) -> Html {
     let classes = classes!(
         "bg-gray-700",
@@ -96,6 +95,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn fetch_new_word(
     word: &UseStateHandle<String>,
     loading: &UseStateHandle<bool>,
@@ -104,6 +104,7 @@ fn fetch_new_word(
     game_over: &UseStateHandle<bool>,
     length: &UseStateHandle<usize>,
     node_refs: &UseStateHandle<Vec<NodeRef>>,
+    result: &UseStateHandle<GameResult>,
 ) {
     let handle = word.clone();
     let loading = loading.clone();
@@ -112,36 +113,27 @@ fn fetch_new_word(
     let game_over = game_over.clone();
     let length = length.clone();
     let node_refs = node_refs.clone();
+    let result = result.clone();
 
     wasm_bindgen_futures::spawn_local(async move {
-        debug!("retrieving word");
         let res = Request::get(NEW_WORD_URI).send().await;
-        debug!(RESULT = format!("{res:?}"));
-        match res {
-            Ok(r) => {
-                debug!(RESPONSE = format!("{r:?}"));
-                match r.text().await {
-                    Ok(w) => {
-                        debug!(WORD = &w);
-                        length.set(w.len());
-                        node_refs.set(vec![NodeRef::default(); w.len()]);
-                        input_values.set(vec![String::new(); w.len()]);
-                        handle.set(w.to_uppercase());
-                        submitted_words.set(Vec::with_capacity(MAX_TRIES));
-                        game_over.set(false);
-                        loading.set(false);
-                    }
-                    Err(e) => error!(ERROR = format!("{e:?}"), "failed to get request body"),
-                }
+        if let Ok(r) = res {
+            if let Ok(w) = r.text().await {
+                length.set(w.len());
+                node_refs.set(vec![NodeRef::default(); w.len()]);
+                input_values.set(vec![String::new(); w.len()]);
+                handle.set(w.to_uppercase());
+                submitted_words.set(Vec::with_capacity(MAX_TRIES));
+                game_over.set(false);
+                result.set(GameResult::Lose);
+                loading.set(false);
             }
-            Err(e) => error!(ERROR = format!("{e:?}"), "failed to retrieve word"),
         }
     });
 }
 
 #[function_component]
 pub fn Home() -> Html {
-
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
 
@@ -153,6 +145,8 @@ pub fn Home() -> Html {
     let input_values: UseStateHandle<Vec<String>> = use_state(|| vec![String::new(); *length]);
     let game_over = use_state(|| false);
 
+    let result = use_state(|| GameResult::Lose);
+
     {
         let handle = word.clone();
         let loading = loading.clone();
@@ -162,50 +156,42 @@ pub fn Home() -> Html {
         let game_over = game_over.clone();
         let length = length.clone();
         let node_refs = node_refs.clone();
+        let result = result.clone();
 
         use_effect_with((), move |()| {
-            wasm_bindgen_futures::spawn_local(async move {
-                debug!("retreiving word");
-                let res = Request::get(NEW_WORD_URI).send().await;
-                debug!(RESULT = format!("{res:?}"));
-                match res {
-                    Ok(r) => {
-                        debug!(RESPONSE = format!("{r:?}"));
-                        match r.text().await {
-                            Ok(w) => {
-                                debug!(WORD = &w);
-                                length.set(w.len());
-                                node_refs.set(vec![NodeRef::default(); w.len()]);
-                                input_values.set(vec![String::new(); w.len()]);
-                                handle.set(w.to_uppercase());
-                                submitted_words.set(std::vec::Vec::with_capacity(MAX_TRIES));
-                                game_over.set(false);
-                                loading.set(false);
-                
-                            }
-                            Err(e) => error!(ERROR = format!("{e:?}"),"failed to get request body"),
-                        }
-                    }
-                    Err(e) => error!(ERROR = format!("{e:?}"),"failed to retreive word"),
-                }
-            });
-            || ()
+            fetch_new_word(
+                &handle,
+                &loading,
+                &submitted_words,
+                &input_values,
+                &game_over,
+                &length,
+                &node_refs,
+                &result,
+            );
         });
     }
 
-    
     let game_over_check = {
         let word = word.clone();
         let submitted_words = submitted_words.clone();
         let iv = input_values.clone();
         let game_over = game_over.clone();
         let length = length.clone();
+        let result = result.clone();
+
         Callback::from(move |_| {
             if submitted_words.iter().count() >= *length - 1
                 || crate::compare_strings(&word, &iv.join(""))
                     .iter()
                     .all(|v| matches!(v, CharStatus::Match(_)))
             {
+                if crate::compare_strings(&word, &iv.join(""))
+                    .iter()
+                    .all(|v| matches!(v, CharStatus::Match(_)))
+                {
+                    result.set(GameResult::Win);
+                }
                 game_over.set(true);
             }
         })
@@ -219,8 +205,8 @@ pub fn Home() -> Html {
         let word = word.clone();
         let node_refs = node_refs.clone();
         let loading = loading.clone();
-        
-        
+        let result = result.clone();
+
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
                 let input_values = input_values.clone();
@@ -230,7 +216,17 @@ pub fn Home() -> Html {
                 let word = word.clone();
                 let loading = loading.clone();
                 let node_refs = node_refs.clone();
-                fetch_new_word(&word, &loading, &submitted_words, &input_values, &game_over, &length, &node_refs);
+                let result = result.clone();
+                fetch_new_word(
+                    &word,
+                    &loading,
+                    &submitted_words,
+                    &input_values,
+                    &game_over,
+                    &length,
+                    &node_refs,
+                    &result,
+                );
                 return;
             }
             let values: Vec<_> = input_values.iter().cloned().collect();
@@ -293,11 +289,22 @@ pub fn Home() -> Html {
                     {
                         if *loading {
                             html!(<p>{"Loading..."}</p>)
-                        } 
+                        }
                         else if *game_over {
+
+                            let (text, color) = match *result {
+                                GameResult::Win => {
+                                    ("FOUND", "bg-green-600")
+                                },
+                                GameResult::Lose => {
+                                    ("WANTED", "bg-red-600")
+                                }
+                            };
                             html! (
                                 <div>
-                                <h1>{"WANTED"}</h1>
+                                <h1>{
+                                    text
+                                }</h1>
                                     <ul
                                         class={
                                             classes!(
@@ -310,7 +317,7 @@ pub fn Home() -> Html {
                                     >
                                 {
                                     word.chars().map(|e|{
-                        
+
                                         let text = e;
                                         html!{
                                        <li
@@ -330,7 +337,7 @@ pub fn Home() -> Html {
                                             "py-4",
                                             "font-bold",
                                             "text-lg",
-                                            "bg-red-600",
+                                            {color},
                                         )
                                        }
                                    >
