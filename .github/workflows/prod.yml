@@ -17,10 +17,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
-            ~/.cache/trunk
             ~/.cargo
+            ~/.cache/trunk
             target/
+            node_modules
+            frontend/dist
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
 
@@ -42,7 +43,7 @@ jobs:
           node-version: 20
 
       - name: Install Tailwind CSS
-        run: npm install -g tailwindcss
+        run: npm install -D tailwindcss
 
       - name: Build Frontend
         working-directory: ./frontend
