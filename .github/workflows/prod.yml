@@ -18,6 +18,7 @@ jobs:
         with:
           path: |
             ~/.cargo
+            ~/.cargo/bin
             ~/.cache/trunk
             target/
             node_modules
