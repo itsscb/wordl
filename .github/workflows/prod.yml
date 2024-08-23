@@ -22,8 +22,6 @@ jobs:
             ~/.cache/trunk/
             target/
             node_modules/
-            frontend/node_modules/
-            frontend/dist/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
 
