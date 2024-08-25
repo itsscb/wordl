@@ -34,38 +34,39 @@ async fn word() -> String {
 }
 
 async fn log_ip(req: Request<Body>, next: Next) -> Response {
-    let mut head = "REMOTE_ADDR";
-    let ip = req
-        .headers()
-        .get(head)
-        .and_then(|hv| hv.to_str().ok())
-        .or_else(|| {
-            head = "HTTP_CLIENT_IP";
-            req.headers().get(head).and_then(|hv| hv.to_str().ok())
-        })
-        .or_else(|| {
-            head = "x-real-ip";
-            req.headers().get(head).and_then(|hv| hv.to_str().ok())
-        })
-        .or_else(|| {
-            head = "cf-connection-ip";
-            req.headers().get(head).and_then(|hv| hv.to_str().ok())
-        })
-        .or_else(|| {
-            head = "HTTP_X_FORWARDED_FOR";
-            req.headers().get(head).and_then(|hv| hv.to_str().ok())
-        })
-        .or_else(|| {
-            head = "HTTP_FORWARDED_FOR";
-            req.headers().get(head).and_then(|hv| hv.to_str().ok())
-        })
-        .unwrap_or("Unknown");
+    // let mut head = "REMOTE_ADDR";
+    // let ip = req
+    //     .headers()
+    //     .get(head)
+    //     .and_then(|hv| hv.to_str().ok())
+    //     .or_else(|| {
+    //         head = "HTTP_CLIENT_IP";
+    //         req.headers().get(head).and_then(|hv| hv.to_str().ok())
+    //     })
+    //     .or_else(|| {
+    //         head = "x-real-ip";
+    //         req.headers().get(head).and_then(|hv| hv.to_str().ok())
+    //     })
+    //     .or_else(|| {
+    //         head = "cf-connection-ip";
+    //         req.headers().get(head).and_then(|hv| hv.to_str().ok())
+    //     })
+    //     .or_else(|| {
+    //         head = "HTTP_X_FORWARDED_FOR";
+    //         req.headers().get(head).and_then(|hv| hv.to_str().ok())
+    //     })
+    //     .or_else(|| {
+    //         head = "HTTP_FORWARDED_FOR";
+    //         req.headers().get(head).and_then(|hv| hv.to_str().ok())
+    //     })
+    //     .unwrap_or("Unknown");
 
-    if format!("{ip}") == "Unknown" {
-        head = "none"
-    }
+    // if format!("{ip}") == "Unknown" {
+    //     head = "none"
+    // }
 
-    info!(PATH = req.uri().path().to_string(), IP = ip, HEADER = head);
+    // info!(PATH = req.uri().path().to_string(), IP = ip);
+    info!(PATH = req.uri().path().to_string());
 
     next.run(req).await
 }
