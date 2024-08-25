@@ -8,7 +8,6 @@ use axum::{
 };
 use http::Method;
 use rand::seq::SliceRandom;
-use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tracing::info;
@@ -35,23 +34,26 @@ async fn word() -> String {
 }
 
 async fn log_ip(req: Request<Body>, next: Next) -> Response {
+    let mut head = "x-forwarded-for";
     let ip = req
         .headers()
-        .get("x-forwarded-for")
+        .get(head)
         .and_then(|hv| hv.to_str().ok())
         .or_else(|| {
-            req.headers()
-                .get("x-real-ip")
-                .and_then(|hv| hv.to_str().ok())
+            head = "x-real-ip";
+            req.headers().get(head).and_then(|hv| hv.to_str().ok())
         })
         .or_else(|| {
-            req.headers()
-                .get("cf-connecting-ip")
-                .and_then(|hv| hv.to_str().ok())
+            head = "cf-connection-ip";
+            req.headers().get(head).and_then(|hv| hv.to_str().ok())
         })
         .unwrap_or("Unknown");
 
-    info!(PATH = req.uri().path().to_string(), IP = ip);
+    if format!("{ip}") == "Unknown" {
+        head = "none"
+    }
+
+    info!(PATH = req.uri().path().to_string(), IP = ip, HEADER = head);
 
     next.run(req).await
 }
