@@ -35,14 +35,24 @@ async fn word() -> String {
 }
 
 async fn log_ip(req: Request<Body>, next: Next) -> Response {
-    if let Some(addr) = req.extensions().get::<SocketAddr>() {
-        info!(
-            PATH = req.uri().path().to_string(),
-            IP = addr.ip().to_string()
-        );
-    } else {
-        info!(PATH = req.uri().path().to_string());
-    }
+    let ip = req
+        .extensions()
+        .get::<SocketAddr>()
+        .map(|addr| addr.ip().to_string())
+        .or_else(|| {
+            req.headers()
+                .get("x-forwarded-for")
+                .and_then(|hv| hv.to_str().ok().map(String::from))
+        })
+        .or_else(|| {
+            req.headers()
+                .get("x-real-ip")
+                .and_then(|hv| hv.to_str().ok().map(String::from))
+        })
+        .unwrap_or_else(|| "Unknown".to_string());
+
+    info!(PATH = req.uri().path().to_string(), IP = ip);
+
     next.run(req).await
 }
 
