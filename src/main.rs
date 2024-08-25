@@ -1,21 +1,29 @@
-use axum::{routing::get, Router};
-use rand::seq::SliceRandom;
-use tower_http::services::ServeDir;
-use tower_http::cors::{Any,CorsLayer};
+use axum::{
+    body::Body,
+    http::Request,
+    middleware::{self, Next},
+    response::Response,
+    routing::get,
+    Router,
+};
 use http::Method;
+use rand::seq::SliceRandom;
+use std::net::SocketAddr;
+use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
+use tracing::info;
 
 #[shuttle_runtime::main]
 async fn main() -> shuttle_axum::ShuttleAxum {
-
     let cors = CorsLayer::new()
         .allow_origin(Any) // Allow all origins; adjust as necessary
         .allow_methods(vec![Method::GET]) // Specify allowed methods
         .allow_headers(Any);
 
     let router = Router::new()
-        // .route("/", get(hello_world))
         .nest_service("/", ServeDir::new("frontend/dist"))
         .route("/word", get(word))
+        .layer(middleware::from_fn(log_ip))
         .layer(cors);
 
     Ok(router.into())
@@ -24,6 +32,18 @@ async fn main() -> shuttle_axum::ShuttleAxum {
 async fn word() -> String {
     let mut rng = rand::thread_rng();
     WORDS.choose(&mut rng).unwrap().to_string()
+}
+
+async fn log_ip(req: Request<Body>, next: Next) -> Response {
+    if let Some(addr) = req.extensions().get::<SocketAddr>() {
+        info!(
+            PATH = req.uri().path().to_string(),
+            IP = addr.ip().to_string()
+        );
+    } else {
+        info!(PATH = req.uri().path().to_string());
+    }
+    next.run(req).await
 }
 
 static WORDS: &[&str; 5921] = &[
