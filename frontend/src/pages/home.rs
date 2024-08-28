@@ -254,46 +254,106 @@ pub fn Home() -> Html {
         let input_values = input_values.clone();
         let node_refs = node_refs.clone();
 
-        Callback::from(move |e: KeyboardEvent| {
-            match e.key().as_ref() {
-                "Enter" => {
-                    if let Ok(m) = MouseEvent::new("click") {
-                        on_submit.emit(m);
-                    }
-                },
-                "Backspace" => {
-                    e.prevent_default();
+        Callback::from(move |e: KeyboardEvent| match e.key().as_ref() {
+            "Enter" => {
+                if let Ok(m) = MouseEvent::new("click") {
+                    on_submit.emit(m);
+                }
+            }
+            "Backspace" => {
+                e.prevent_default();
 
-                    let index = *curr_index;
-                    let mut values = (*input_values).clone();
-                                            
-                    values[index] = String::new();
-                    input_values.set(values);
-                    if node_refs[index].cast::<web_sys::HtmlInputElement>().is_some() && index > 0 {
-                        let index = index - 1;
-                        curr_index.set(index);
-                        set_focus(index);
-                    }
-                },
-                k if k.len() == 1 && k.chars().all(char::is_alphabetic) => {
-                    let index = *curr_index;
-                    let mut values = (*input_values).clone();
-                                            
+                let index = *curr_index;
+                let mut values = (*input_values).clone();
+
+                values[index] = String::new();
+                input_values.set(values);
+                if node_refs[index]
+                    .cast::<web_sys::HtmlInputElement>()
+                    .is_some()
+                    && index > 0
+                {
+                    let index = index - 1;
+                    curr_index.set(index);
+                    set_focus(index);
+                }
+            }
+            k => {
+                let index = *curr_index;
+                let mut values = (*input_values).clone();
+
+                if k.len() == 1 && k.chars().all(char::is_alphabetic) {
                     values[index] = k.to_uppercase();
                     input_values.set(values);
-                    if node_refs[index].cast::<web_sys::HtmlInputElement>().is_some() && index < *length {
+                    if node_refs[index]
+                        .cast::<web_sys::HtmlInputElement>()
+                        .is_some()
+                        && index < *length
+                    {
                         let index = index + 1;
                         curr_index.set(index);
                         set_focus(index);
                     }
-                },
-                _ => {
-                    let index = *curr_index;
-                    let mut values = (*input_values).clone();
-                    
+                } else {
                     values[index] = String::new();
                     input_values.set(values);
-                },
+                }
+            }
+        })
+    };
+    let on_input = {
+        let curr_index = curr_index.clone();
+        let length = length.clone();
+        let on_submit = on_submit.clone();
+        let input_values = input_values.clone();
+        let node_refs = node_refs.clone();
+
+        Callback::from(move |e: InputEvent| {
+            let event = e.dyn_into::<web_sys::KeyboardEvent>().ok();
+            if let Some(e) = event.as_ref() {
+                match e.key().as_ref() {
+                    "Enter" => {
+                        if let Ok(m) = MouseEvent::new("click") {
+                            on_submit.emit(m);
+                        }
+                    }
+                    "Backspace" => {
+                        let index = *curr_index;
+                        let mut values = (*input_values).clone();
+                        values[index] = String::new();
+                        input_values.set(values);
+                        if node_refs[index]
+                            .cast::<web_sys::HtmlInputElement>()
+                            .is_some()
+                            && index > 0
+                        {
+                            let index = index - 1;
+                            curr_index.set(index);
+                            set_focus(index);
+                        }
+                    }
+                    k => {
+                        let index = *curr_index;
+                        let mut values = (*input_values).clone();
+
+                        if k.len() == 1 && k.chars().all(char::is_alphabetic) {
+                            values[index] = k.to_uppercase();
+                            input_values.set(values);
+                            if node_refs[index]
+                                .cast::<web_sys::HtmlInputElement>()
+                                .is_some()
+                                && index < *length
+                            {
+                                let index = index + 1;
+                                curr_index.set(index);
+                                set_focus(index);
+                            }
+                        } else {
+                            values[index] = String::new();
+                            input_values.set(values);
+                        }
+                    }
+                }
             }
         })
     };
@@ -405,16 +465,17 @@ pub fn Home() -> Html {
                                                     curr_index.set(i);
                                                 }
                                             }
-                                        
+
                                     })
                                 };
                                 html! {
                                     <input
                                         onkeyup={on_enter.clone()}
-                                            tabindex={index.to_string()}
-                                            ref={node_ref.clone()}
-                                            value={input_values[index].clone()}
-                                            onfocus={on_focus.clone()}
+                                        oninput={on_input.clone()}
+                                        tabindex={index.to_string()}
+                                        ref={node_ref.clone()}
+                                        value={input_values[index].clone()}
+                                        onfocus={on_focus.clone()}
                                         class={
                                             classes!(
                                                 "w-16",
