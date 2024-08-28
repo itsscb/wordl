@@ -138,6 +138,9 @@ pub fn Home() -> Html {
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
     let curr_index: UseStateHandle<usize> = use_state(|| 0usize);
+    
+    // TODO: Remove DEBUG 
+    let inp: UseStateHandle<String> = use_state(String::new);
 
     let length = use_state(|| 0usize);
     let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> =
@@ -308,6 +311,9 @@ pub fn Home() -> Html {
         let input_values = input_values.clone();
         let node_refs = node_refs.clone();
 
+        // TODO: Remove DEBUG 
+        let inp = inp.clone();
+
         Callback::from(move |e: InputEvent| {
             let event = e.dyn_into::<web_sys::KeyboardEvent>().ok();
             if let Some(e) = event.as_ref() {
@@ -335,6 +341,9 @@ pub fn Home() -> Html {
                     k => {
                         let index = *curr_index;
                         let mut values = (*input_values).clone();
+
+                        // TODO: Remove DEBUG 
+                        inp.set(k.to_owned());
 
                         if k.len() == 1 && k.chars().all(char::is_alphabetic) {
                             values[index] = k.to_uppercase();
@@ -375,6 +384,9 @@ pub fn Home() -> Html {
                 <div
                     class="h-5/6 flex flex-col"
                 >
+                        
+                // TODO: Remove DEBUG 
+                <h1>{(*inp).clone()}</h1>
                 <form
                 class="order-last mt-8"
                 >
@@ -460,11 +472,11 @@ pub fn Home() -> Html {
 
                                     Callback::from(move |e: FocusEvent| {
                                         let target = e.target_unchecked_into::<web_sys::HtmlElement>();
-                                            if let Some(index) = target.get_attribute("tabindex") {
-                                                if let Ok(i) = index.parse::<usize>() {
-                                                    curr_index.set(i);
-                                                }
+                                        if let Some(index) = target.get_attribute("tabindex") {
+                                            if let Ok(i) = index.parse::<usize>() {
+                                                curr_index.set(i);
                                             }
+                                        }
 
                                     })
                                 };
