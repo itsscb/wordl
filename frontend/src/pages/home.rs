@@ -1,14 +1,21 @@
+use std::time::Duration;
+
 use gloo_net::http::Request;
+use wasm_bindgen_futures::spawn_local;
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
+use yew::platform::time::sleep;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
 use crate::pages::game::GameResult;
 use crate::CharStatus;
 
+use super::game::WordList;
+
 static NEW_WORD_URI: &str = "https://wordl.shuttleapp.rs/word";
+static WORDS_URI: &str = "https://wordl.shuttleapp.rs/public/wordlist.json";
 static MAX_TRIES: usize = 5;
 
 fn set_focus(index: usize) {
@@ -36,6 +43,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
         "py-4",
         "font-bold",
         "text-lg",
+        "mb-4",
     );
     html! (
             <ul
@@ -96,6 +104,7 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
 
 #[allow(clippy::too_many_arguments)]
 fn fetch_new_word(
+    word_list: &UseStateHandle<WordList>,
     word: &UseStateHandle<String>,
     loading: &UseStateHandle<bool>,
     submitted_words: &UseStateHandle<Vec<Vec<CharStatus<String>>>>,
@@ -105,7 +114,6 @@ fn fetch_new_word(
     node_refs: &UseStateHandle<Vec<NodeRef>>,
     result: &UseStateHandle<GameResult>,
 ) {
-    let handle = word.clone();
     let loading = loading.clone();
     let submitted_words = submitted_words.clone();
     let input_values = input_values.clone();
@@ -113,7 +121,8 @@ fn fetch_new_word(
     let length = length.clone();
     let node_refs = node_refs.clone();
     let result = result.clone();
-
+    let word = word.clone();
+    // let word_list = word_list.clone();
     wasm_bindgen_futures::spawn_local(async move {
         loading.set(true);
         let res = Request::get(NEW_WORD_URI).send().await;
@@ -122,11 +131,25 @@ fn fetch_new_word(
                 length.set(w.len());
                 node_refs.set(vec![NodeRef::default(); w.len()]);
                 input_values.set(vec![String::new(); w.len()]);
-                handle.set(w.to_uppercase());
+                word.set(w.to_uppercase());
                 submitted_words.set(Vec::with_capacity(MAX_TRIES));
                 game_over.set(false);
                 result.set(GameResult::Lose);
                 loading.set(false);
+                // sleep(Duration::from_secs(5)).await;
+                // word.set(word_list.get_word().to_uppercase());
+            }
+        }
+    });
+}
+
+fn fetch_words(state: &UseStateHandle<WordList>) {
+    let state = state.clone();
+    wasm_bindgen_futures::spawn_local(async move {
+        let res = Request::get(WORDS_URI).send().await;
+        if let Ok(r) = res {
+            if let Ok(w) = r.text().await {
+                state.set(WordList::from_json(&w));
             }
         }
     });
@@ -134,6 +157,8 @@ fn fetch_new_word(
 
 #[function_component]
 pub fn Home() -> Html {
+    let word_list: UseStateHandle<WordList> = use_state(WordList::new);
+
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
     let curr_index: UseStateHandle<usize> = use_state(|| 0usize);
@@ -149,6 +174,8 @@ pub fn Home() -> Html {
     let result = use_state(|| GameResult::Lose);
 
     {
+        let word_list = word_list.clone();
+        let wl = word_list.clone();
         let handle = word.clone();
         let loading = loading.clone();
 
@@ -159,8 +186,16 @@ pub fn Home() -> Html {
         let node_refs = node_refs.clone();
         let result = result.clone();
 
+        // use_effect_with((), move |()| {
+        //     spawn_local(async move {
+        //         fetch_words(&wl);
+        //     });
+        // });
+
         use_effect_with((), move |()| {
+            // sleep(Duration::from_millis(200));
             fetch_new_word(
+                &word_list,
                 &handle,
                 &loading,
                 &submitted_words,
@@ -208,10 +243,12 @@ pub fn Home() -> Html {
         let loading = loading.clone();
         let result = result.clone();
         let curr_index = curr_index.clone();
+        let word_list = word_list.clone();
 
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
                 curr_index.set(0);
+                let word_list = word_list.clone();
                 let input_values = input_values.clone();
                 let submitted_words = submitted_words.clone();
                 let game_over = game_over.clone();
@@ -221,6 +258,7 @@ pub fn Home() -> Html {
                 let node_refs = node_refs.clone();
                 let result = result.clone();
                 fetch_new_word(
+                    &word_list,
                     &word,
                     &loading,
                     &submitted_words,
@@ -246,60 +284,65 @@ pub fn Home() -> Html {
         })
     };
     let on_enter = {
-            let on_submit = on_submit.clone();
-            let curr_index = curr_index.clone();
-            let node_refs = node_refs.clone();
-            let input_values = input_values.clone();
+        let on_submit = on_submit.clone();
+        let curr_index = curr_index.clone();
+        let node_refs = node_refs.clone();
+        let input_values = input_values.clone();
+        let length = length.clone();
 
-            Callback::from(move |e: KeyboardEvent| {
-    
-            match e.key().as_ref() {
-                "Enter" => {
-                    if let Ok(m) = MouseEvent::new("click") {
-                        on_submit.emit(m);
-                    }
+        Callback::from(move |e: KeyboardEvent| match e.key().as_ref() {
+            "Enter" => {
+                if let Ok(m) = MouseEvent::new("click") {
+                    on_submit.emit(m);
                 }
-                "Backspace" => {
-                    e.prevent_default();
-    
-                    
-                    let index = *curr_index;
-                    let mut values = (*input_values).clone();
-                    if node_refs[index]
-                        .cast::<web_sys::HtmlInputElement>()
-                        .is_some()
-                        && index > 0
-                    {
-                        values[index] = String::new();
-                        input_values.set(values);
-                        let index = index - 1;
-                        curr_index.set(index);
-                        set_focus(index);
-                    }
-                }
-                _ => {}
             }
+            "Backspace" => {
+                e.prevent_default();
+
+                let mut index = *curr_index;
+                let mut values = (*input_values).clone();
+
+                if index >= *length {
+                    curr_index.set(*length - 1);
+                    index = *length - 1;
+                }
+
+                if node_refs[index]
+                    .cast::<web_sys::HtmlInputElement>()
+                    .is_some()
+                    && index > 0
+                {
+                    values[index] = String::new();
+                    input_values.set(values);
+                    let index = index - 1;
+                    curr_index.set(index);
+                    set_focus(index);
+                }
+            }
+            _ => {}
         })
     };
-    
+
     let on_input = {
         let curr_index = curr_index.clone();
         let length = length.clone();
         let input_values = input_values.clone();
-    
+
         Callback::from(move |e: InputEvent| {
             if let Some(value) = e.data() {
                 let index = *curr_index;
                 let mut values = (*input_values).clone();
 
-                if value.len() < values[index].len() && index > 0 {
+                if index >= *length {
+                    values[index - 1] = value;
+                    input_values.set(values);
+                } else if value.len() < values[index].len() && index > 0 && index <= *length {
                     values[index] = String::new();
                     input_values.set(values);
                     let new_index = index - 1;
                     curr_index.set(new_index);
                     set_focus(new_index);
-                }
-                else if value.len() == 1 && value.chars().all(char::is_alphabetic) {
+                } else if value.len() == 1 && value.chars().all(char::is_alphabetic) {
                     values[index] = value.to_uppercase();
                     input_values.set(values);
                     if index < *length {
@@ -310,7 +353,7 @@ pub fn Home() -> Html {
                 } else {
                     values[index] = String::new();
                     input_values.set(values);
-                }            
+                }
             }
         })
     };
@@ -329,11 +372,23 @@ pub fn Home() -> Html {
                         )
                     }
                 >
+                // <h1>{format!("{:?}",*word_list)}</h1>
                 <div
-                    class="h-5/6 flex flex-col items-center"
+                    class={
+                        classes!(
+                            "h-5/6",
+                            "flex",
+                            "flex-col",
+                            "items-center",
+                            "pt-12",
+                        )
+                    }
                 >
-                    
-                    <div class="mb-12">
+
+                    <div class={
+                        classes!(
+                            "mb-12",
+                        )}>
                     { for submitted_words.iter().map(|e| {string_to_html(e)})}
                     </div>
                     <form
@@ -465,7 +520,7 @@ pub fn Home() -> Html {
                                         "w-full",
                                         "flex",
                                         "justify-end",
-        
+
                                     )
                                 }
                             >
@@ -506,7 +561,7 @@ pub fn Home() -> Html {
                             }
                         }
                     }
-                   
+
                 </div>
             </div>
             }
