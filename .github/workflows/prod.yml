@@ -49,7 +49,7 @@ jobs:
 
       - name: Commit Frontend Release Build
         run: |
-          git config --global user.name "github-actions"
+          git config --global user.name "itsscb"
           git config --global user.email "dev@itsscb.de"
           git add -A
           git commit -m "release: frontend"
