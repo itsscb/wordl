@@ -68,7 +68,6 @@ jobs:
 
       - name: Build and test code
         run: |
-          cargo build --verbose --release
           cargo test --verbose
 
   deploy:
