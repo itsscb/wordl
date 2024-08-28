@@ -247,15 +247,11 @@ pub fn Home() -> Html {
         })
     };
     let on_enter = {
-        //     if &e.key() == "Enter" {
-        //         if let Ok(m) = MouseEvent::new("click") {
-            //             on_submit.emit(m);
-            //         }
-            //     }
             let on_submit = on_submit.clone();
             let curr_index = curr_index.clone();
-            // let input_values = input_values.clone();
             let node_refs = node_refs.clone();
+            let input_values = input_values.clone();
+
             Callback::from(move |e: KeyboardEvent| {
     
             match e.key().as_ref() {
@@ -267,16 +263,16 @@ pub fn Home() -> Html {
                 "Backspace" => {
                     e.prevent_default();
     
+                    
                     let index = *curr_index;
-                    // let mut values = (*input_values).clone();
-    
-                    // values[index] = String::new();
-                    // input_values.set(values);
+                    let mut values = (*input_values).clone();
                     if node_refs[index]
                         .cast::<web_sys::HtmlInputElement>()
                         .is_some()
                         && index > 0
                     {
+                        values[index] = String::new();
+                        input_values.set(values);
                         let index = index - 1;
                         curr_index.set(index);
                         set_focus(index);
@@ -293,37 +289,30 @@ pub fn Home() -> Html {
         let input_values = input_values.clone();
     
         Callback::from(move |e: InputEvent| {
-            if let Some(target) = e.target() {
-                if let Ok(input_element) = target.dyn_into::<HtmlInputElement>() {
-                    let value = input_element.value();
-            
-                    let index = *curr_index;
-                    let mut values = (*input_values).clone();
-                    
-                    if value.is_empty() && !values[index].is_empty() {
-                        values[index] = String::new();
-                        input_values.set(values);
-                    }
-                    else if value.len() < values[index].len() && index > 0 {
-                        let new_index = index - 1;
+            if let Some(value) = e.data() {
+                let index = *curr_index;
+                let mut values = (*input_values).clone();
+
+                if value.len() < values[index].len() && index > 0 {
+                    values[index] = String::new();
+                    input_values.set(values);
+                    let new_index = index - 1;
+                    curr_index.set(new_index);
+                    set_focus(new_index);
+                }
+                else if value.len() == 1 && value.chars().all(char::is_alphabetic) {
+                    values[index] = value.to_uppercase();
+                    input_values.set(values);
+                    if index < *length {
+                        let new_index = index + 1;
                         curr_index.set(new_index);
                         set_focus(new_index);
                     }
-                    else if value.len() == 1 && value.chars().all(char::is_alphabetic) {
-                        values[index] = value.to_uppercase();
-                        input_values.set(values);
-                        if index < *length {
-                            let new_index = index + 1;
-                            curr_index.set(new_index);
-                            set_focus(new_index);
-                        }
-                    } else {
-                        values[index] = String::new();
-                        input_values.set(values);
-                    }
-                }
+                } else {
+                    values[index] = String::new();
+                    input_values.set(values);
+                }            
             }
-
         })
     };
 
