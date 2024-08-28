@@ -27,12 +27,19 @@
             clippy
             tailwindcss
             cargo-shuttle
+            cargo-edit
+
+            openssl
+            pkg-config
           ];
 
           shellHook = ''
             export PATH=${rustToolchain}/bin:$PATH
             export RUSTC_VERSION=$(rustc --version)
             export RUST_SRC_PATH="${rustToolchain}/lib/rustlib/src/rust/library"
+            export OPENSSL_DIR="${pkgs.openssl.dev}"
+            export OPENSSL_LIB_DIR="${pkgs.openssl.out}/lib"
+            export OPENSSL_INCLUDE_DIR="${pkgs.openssl.dev}/include"
           '';
 
           packages = pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ libiconv ]);
