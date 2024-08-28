@@ -24,6 +24,7 @@
           buildInputs = with pkgs; [
             rustToolchain
             trunk
+            clippy
             tailwindcss
           ];
 
