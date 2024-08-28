@@ -51,11 +51,20 @@ jobs:
         run: |
           trunk build --release
 
-      - name: upload frontend artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-artifacts
-          path: ./frontend/dist
+      - name: commit frontend release build
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+          git add frontend/dist -f
+          git diff --staged --quiet || (git commit -m "release: frontend build ${{ github.sha }} [skip ci]" && git push)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: upload frontend artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: frontend-artifacts
+      #     path: ./frontend/dist
 
       - name: run tests
         run: |
@@ -68,14 +77,14 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
-      - name: download frontend artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-artifacts
+      # - name: download frontend artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: frontend-artifacts
 
-      - name: display structure of downloaded files
-        run: ls -R
-        working-directory: ./frontend/dist
+      # - name: display structure of downloaded files
+      #   run: ls -R
+      #   working-directory: ./frontend/dist
 
       - uses: shuttle-hq/deploy-action@main
         with:
