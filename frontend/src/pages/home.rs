@@ -116,6 +116,7 @@ fn fetch_new_word(
     let result = result.clone();
 
     wasm_bindgen_futures::spawn_local(async move {
+        loading.set(true);
         let res = Request::get(NEW_WORD_URI).send().await;
         if let Ok(r) = res {
             if let Ok(w) = r.text().await {
@@ -136,6 +137,7 @@ fn fetch_new_word(
 pub fn Home() -> Html {
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
+    let curr_index: UseStateHandle<usize> = use_state(|| 0usize);
 
     let length = use_state(|| 0usize);
     let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> =
@@ -206,9 +208,11 @@ pub fn Home() -> Html {
         let node_refs = node_refs.clone();
         let loading = loading.clone();
         let result = result.clone();
+        let curr_index = curr_index.clone();
 
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
+                curr_index.set(0);
                 let input_values = input_values.clone();
                 let submitted_words = submitted_words.clone();
                 let game_over = game_over.clone();
@@ -238,18 +242,52 @@ pub fn Home() -> Html {
             submitted_words.set(new_items);
             input_values.set(vec![String::new(); word.len()]);
             set_focus(0);
+            curr_index.set(0);
             game_over_check.emit(MouseEvent::none());
         })
     };
 
     let on_enter = {
+        let curr_index = curr_index.clone();
+        let length = length.clone();
         let on_submit = on_submit.clone();
+        let input_values = input_values.clone();
+        let node_refs = node_refs.clone();
 
         Callback::from(move |e: KeyboardEvent| {
-            if e.key() == "Enter" {
-                if let Ok(m) = MouseEvent::new("click") {
-                    on_submit.emit(m);
-                }
+            match e.key().as_ref() {
+                "Enter" => {
+                    if let Ok(m) = MouseEvent::new("click") {
+                        on_submit.emit(m);
+                    }
+                },
+                "Backspace" => {
+                    e.prevent_default();
+
+                    let index = *curr_index;
+                    let mut values = (*input_values).clone();
+                                            
+                    values[index] = String::new();
+                    input_values.set(values);
+                    if node_refs[index].cast::<web_sys::HtmlInputElement>().is_some() && index > 0 {
+                        let index = index - 1;
+                        curr_index.set(index);
+                        set_focus(index);
+                    }
+                },
+                k if k.len() == 1 && k.chars().all(char::is_alphabetic) => {
+                    let index = *curr_index;
+                    let mut values = (*input_values).clone();
+                                            
+                    values[index] = k.to_uppercase();
+                    input_values.set(values);
+                    if node_refs[index].cast::<web_sys::HtmlInputElement>().is_some() && index < *length {
+                        let index = index + 1;
+                        curr_index.set(index);
+                        set_focus(index);
+                    }
+                },
+                _ => {},
             }
         })
     };
@@ -268,7 +306,6 @@ pub fn Home() -> Html {
                         )
                     }
                 >
-                // <h1>{(*word).clone()} {" NODE_REFS: "}{node_refs.len()} {" WORD_LEN: "}{*length}</h1>
                 <div
                     class="h-5/6 flex flex-col"
                 >
@@ -352,29 +389,26 @@ pub fn Home() -> Html {
                         }
                         else if !*game_over {
                             node_refs.iter().enumerate().map(|(index, node_ref)| {
-                                let on_input = {
-                                    let node_ref = node_ref.clone();
-                                    let next_index = index +1;
-                                    let input_values = input_values.clone();
-                                    Callback::from(move |event: InputEvent| {
-                                        if let Some(value) = event.data() {
-                                            let mut values = (*input_values).clone();
-                                            values[index] = value.to_uppercase();
-                                            input_values.set(values);
-                                            if let Some(input) = node_ref.cast::<web_sys::HtmlInputElement>() {
-                                                input.value();
-                                                set_focus(next_index);
+                                let on_focus = {
+                                    let curr_index = curr_index.clone();
+
+                                    Callback::from(move |e: FocusEvent| {
+                                        let target = e.target_unchecked_into::<web_sys::HtmlElement>();
+                                            if let Some(index) = target.get_attribute("tabindex") {
+                                                if let Ok(i) = index.parse::<usize>() {
+                                                    curr_index.set(i);
+                                                }
                                             }
-                                        }
+                                        
                                     })
                                 };
                                 html! {
                                     <input
-                                        onkeypress={on_enter.clone()}
+                                        onkeyup={on_enter.clone()}
                                             tabindex={index.to_string()}
                                             ref={node_ref.clone()}
                                             value={input_values[index].clone()}
-                                            oninput={on_input}
+                                            onfocus={on_focus.clone()}
                                         class={
                                             classes!(
                                                 "w-16",
