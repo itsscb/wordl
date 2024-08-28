@@ -287,7 +287,13 @@ pub fn Home() -> Html {
                         set_focus(index);
                     }
                 },
-                _ => {},
+                _ => {
+                    let index = *curr_index;
+                    let mut values = (*input_values).clone();
+                    
+                    values[index] = String::new();
+                    input_values.set(values);
+                },
             }
         })
     };
