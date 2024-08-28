@@ -1,7 +1,7 @@
 use gloo_net::http::Request;
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
-use web_sys::HtmlElement;
+use web_sys::{HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
@@ -138,9 +138,6 @@ pub fn Home() -> Html {
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
     let curr_index: UseStateHandle<usize> = use_state(|| 0usize);
-    
-    // TODO: Remove DEBUG 
-    let inp: UseStateHandle<String> = use_state(String::new);
 
     let length = use_state(|| 0usize);
     let submitted_words: UseStateHandle<Vec<Vec<CharStatus<String>>>> =
@@ -249,121 +246,84 @@ pub fn Home() -> Html {
             game_over_check.emit(MouseEvent::none());
         })
     };
-
     let on_enter = {
-        let curr_index = curr_index.clone();
-        let length = length.clone();
-        let on_submit = on_submit.clone();
-        let input_values = input_values.clone();
-        let node_refs = node_refs.clone();
-
-        Callback::from(move |e: KeyboardEvent| match e.key().as_ref() {
-            "Enter" => {
-                if let Ok(m) = MouseEvent::new("click") {
-                    on_submit.emit(m);
+        //     if &e.key() == "Enter" {
+        //         if let Ok(m) = MouseEvent::new("click") {
+            //             on_submit.emit(m);
+            //         }
+            //     }
+            let on_submit = on_submit.clone();
+            let curr_index = curr_index.clone();
+            // let input_values = input_values.clone();
+            let node_refs = node_refs.clone();
+            Callback::from(move |e: KeyboardEvent| {
+    
+            match e.key().as_ref() {
+                "Enter" => {
+                    if let Ok(m) = MouseEvent::new("click") {
+                        on_submit.emit(m);
+                    }
                 }
-            }
-            "Backspace" => {
-                e.prevent_default();
-
-                let index = *curr_index;
-                let mut values = (*input_values).clone();
-
-                values[index] = String::new();
-                input_values.set(values);
-                if node_refs[index]
-                    .cast::<web_sys::HtmlInputElement>()
-                    .is_some()
-                    && index > 0
-                {
-                    let index = index - 1;
-                    curr_index.set(index);
-                    set_focus(index);
-                }
-            }
-            k => {
-                let index = *curr_index;
-                let mut values = (*input_values).clone();
-
-                if k.len() == 1 && k.chars().all(char::is_alphabetic) {
-                    values[index] = k.to_uppercase();
-                    input_values.set(values);
+                "Backspace" => {
+                    e.prevent_default();
+    
+                    let index = *curr_index;
+                    // let mut values = (*input_values).clone();
+    
+                    // values[index] = String::new();
+                    // input_values.set(values);
                     if node_refs[index]
                         .cast::<web_sys::HtmlInputElement>()
                         .is_some()
-                        && index < *length
+                        && index > 0
                     {
-                        let index = index + 1;
+                        let index = index - 1;
                         curr_index.set(index);
                         set_focus(index);
                     }
-                } else {
-                    values[index] = String::new();
-                    input_values.set(values);
                 }
+                _ => {}
             }
         })
     };
+    
     let on_input = {
         let curr_index = curr_index.clone();
         let length = length.clone();
-        let on_submit = on_submit.clone();
         let input_values = input_values.clone();
-        let node_refs = node_refs.clone();
-
-        // TODO: Remove DEBUG 
-        let inp = inp.clone();
-
+    
         Callback::from(move |e: InputEvent| {
-            let event = e.dyn_into::<web_sys::KeyboardEvent>().ok();
-            if let Some(e) = event.as_ref() {
-                match e.key().as_ref() {
-                    "Enter" => {
-                        if let Ok(m) = MouseEvent::new("click") {
-                            on_submit.emit(m);
-                        }
-                    }
-                    "Backspace" => {
-                        let index = *curr_index;
-                        let mut values = (*input_values).clone();
+            if let Some(target) = e.target() {
+                if let Ok(input_element) = target.dyn_into::<HtmlInputElement>() {
+                    let value = input_element.value();
+            
+                    let index = *curr_index;
+                    let mut values = (*input_values).clone();
+                    
+                    if value.is_empty() && !values[index].is_empty() {
                         values[index] = String::new();
                         input_values.set(values);
-                        if node_refs[index]
-                            .cast::<web_sys::HtmlInputElement>()
-                            .is_some()
-                            && index > 0
-                        {
-                            let index = index - 1;
-                            curr_index.set(index);
-                            set_focus(index);
-                        }
                     }
-                    k => {
-                        let index = *curr_index;
-                        let mut values = (*input_values).clone();
-
-                        // TODO: Remove DEBUG 
-                        inp.set(k.to_owned());
-
-                        if k.len() == 1 && k.chars().all(char::is_alphabetic) {
-                            values[index] = k.to_uppercase();
-                            input_values.set(values);
-                            if node_refs[index]
-                                .cast::<web_sys::HtmlInputElement>()
-                                .is_some()
-                                && index < *length
-                            {
-                                let index = index + 1;
-                                curr_index.set(index);
-                                set_focus(index);
-                            }
-                        } else {
-                            values[index] = String::new();
-                            input_values.set(values);
+                    else if value.len() < values[index].len() && index > 0 {
+                        let new_index = index - 1;
+                        curr_index.set(new_index);
+                        set_focus(new_index);
+                    }
+                    else if value.len() == 1 && value.chars().all(char::is_alphabetic) {
+                        values[index] = value.to_uppercase();
+                        input_values.set(values);
+                        if index < *length {
+                            let new_index = index + 1;
+                            curr_index.set(new_index);
+                            set_focus(new_index);
                         }
+                    } else {
+                        values[index] = String::new();
+                        input_values.set(values);
                     }
                 }
             }
+
         })
     };
 
@@ -384,9 +344,6 @@ pub fn Home() -> Html {
                 <div
                     class="h-5/6 flex flex-col"
                 >
-                        
-                // TODO: Remove DEBUG 
-                <h1>{(*inp).clone()}</h1>
                 <form
                 class="order-last mt-8"
                 >
