@@ -51,14 +51,6 @@ jobs:
         run: |
           trunk build --release
 
-      - name: Commit Frontend Release Build
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "dev@itsscb.de"
-          git add -A
-          git commit -m "release: frontend"
-          git push
-
       - name: Upload Frontend Artifacts
         uses: actions/upload-artifact@v4
         with:
