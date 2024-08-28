@@ -1,7 +1,7 @@
 use gloo_net::http::Request;
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
-use web_sys::{HtmlElement, HtmlInputElement};
+use web_sys::HtmlElement;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
@@ -44,7 +44,6 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
                         "flex",
                         "flex-row",
                         "gap-4",
-                        "mt-4",
                         "notranslate",
                     )
                 }
@@ -324,161 +323,192 @@ pub fn Home() -> Html {
                         classes!(
                             "flex",
                             "flex-col",
-                            "mt-4",
                             "items-center",
                             "h-[90vh]",
+                            "pt-12",
                         )
                     }
                 >
                 <div
-                    class="h-5/6 flex flex-col"
+                    class="h-5/6 flex flex-col items-center"
                 >
-                <form
-                class="order-last mt-8"
-                >
-                <div
-                    class={
-                        classes!(
-                            "flex",
-                            "flex-row",
-                            "font-bold",
-                            "text-lg",
-                            "gap-4",
-                        )
-                    }
-                >
-                    {
-                        if *loading {
-                            html!(<p>{"Loading..."}</p>)
-                        }
-                        else if *game_over {
-
-                            let (text, color) = match *result {
-                                GameResult::Win => {
-                                    ("FOUND", "bg-green-600")
-                                },
-                                GameResult::Lose => {
-                                    ("WANTED", "bg-red-600")
+                    
+                    <div class="mb-12">
+                    { for submitted_words.iter().map(|e| {string_to_html(e)})}
+                    </div>
+                    <form
+                    class="mb-4"
+                    >
+                        <div
+                            class={
+                                classes!(
+                                    "flex",
+                                    "flex-row",
+                                    "font-bold",
+                                    "text-lg",
+                                    "gap-4",
+                                )
+                            }
+                        >
+                            {
+                                if *loading {
+                                    html!(<p>{"Loading..."}</p>)
                                 }
-                            };
-                            html! (
-                                <div>
-                                <h1>{
-                                    text
-                                }</h1>
-                                    <ul
-                                        class={
-                                            classes!(
-                                                "flex",
-                                                "flex-row",
-                                                "gap-4",
-                                                "notranslate",
-                                            )
-                                        }
-                                    >
-                                {
-                                    word.chars().map(|e|{
+                                else if *game_over {
 
-                                        let text = e;
-                                        html!{
-                                       <li
+                                    let (text, color) = match *result {
+                                        GameResult::Win => {
+                                            ("FOUND", "bg-green-600")
+                                        },
+                                        GameResult::Lose => {
+                                            ("WANTED", "bg-red-600")
+                                        }
+                                    };
+                                    html! (
+                                        <div>
+                                        <h1>{
+                                            text
+                                        }</h1>
+                                            <ul
+                                                class={
+                                                    classes!(
+                                                        "flex",
+                                                        "flex-row",
+                                                        "gap-4",
+                                                        "notranslate",
+                                                    )
+                                                }
+                                            >
+                                        {
+                                            word.chars().map(|e|{
+
+                                                let text = e;
+                                                html!{
+                                            <li
+                                                    class={
+                                                        classes!(
+                                                            "flex",
+                                                            "items-center"
+                                                        )
+                                                    }
+                                            >
+                                            <span
                                             class={
                                                 classes!(
-                                                    "flex",
-                                                    "items-center"
+                                                    "w-16",
+                                                    "h-16",
+                                                    "text-center",
+                                                    "py-4",
+                                                    "font-bold",
+                                                    "text-lg",
+                                                    {color},
                                                 )
                                             }
-                                       >
-                                       <span
-                                       class={
-                                        classes!(
-                                            "w-16",
-                                            "h-16",
-                                            "text-center",
-                                            "py-4",
-                                            "font-bold",
-                                            "text-lg",
-                                            {color},
-                                        )
-                                       }
-                                   >
-                                       {text}
-                                       </span>
-                                   </li>
-                                }}).collect::<Html>()
-                                }
-                                </ul>
-                                </div>
-                            )
-                        }
-                        else if !*game_over {
-                            node_refs.iter().enumerate().map(|(index, node_ref)| {
-                                let on_focus = {
-                                    let curr_index = curr_index.clone();
-
-                                    Callback::from(move |e: FocusEvent| {
-                                        let target = e.target_unchecked_into::<web_sys::HtmlElement>();
-                                        if let Some(index) = target.get_attribute("tabindex") {
-                                            if let Ok(i) = index.parse::<usize>() {
-                                                curr_index.set(i);
-                                            }
+                                        >
+                                            {text}
+                                            </span>
+                                        </li>
+                                        }}).collect::<Html>()
                                         }
-
-                                    })
-                                };
-                                html! {
-                                    <input
-                                        onkeyup={on_enter.clone()}
-                                        oninput={on_input.clone()}
-                                        tabindex={index.to_string()}
-                                        ref={node_ref.clone()}
-                                        value={input_values[index].clone()}
-                                        onfocus={on_focus.clone()}
-                                        class={
-                                            classes!(
-                                                "w-16",
-                                                "h-16",
-                                                "text-center",
-                                                "bg-gray-600"
-                                            )
-                                        }
-                                    />
+                                        </ul>
+                                        </div>
+                                    )
                                 }
-                            }).collect::<Html>()
+                                else if !*game_over {
+                                    node_refs.iter().enumerate().map(|(index, node_ref)| {
+                                        let on_focus = {
+                                            let curr_index = curr_index.clone();
+
+                                            Callback::from(move |e: FocusEvent| {
+                                                let target = e.target_unchecked_into::<web_sys::HtmlElement>();
+                                                if let Some(index) = target.get_attribute("tabindex") {
+                                                    if let Ok(i) = index.parse::<usize>() {
+                                                        curr_index.set(i);
+                                                    }
+                                                }
+
+                                            })
+                                        };
+                                        html! {
+                                            <input
+                                                onkeyup={on_enter.clone()}
+                                                oninput={on_input.clone()}
+                                                tabindex={index.to_string()}
+                                                ref={node_ref.clone()}
+                                                value={input_values[index].clone()}
+                                                onfocus={on_focus.clone()}
+                                                class={
+                                                    classes!(
+                                                        "w-16",
+                                                        "h-16",
+                                                        "text-center",
+                                                        "bg-gray-600"
+                                                    )
+                                                }
+                                            />
+                                        }
+                                    }).collect::<Html>()
+                                } else {
+                                    html!(<div></div>)
+                                }
+                            }
+                        </div>
+                    </form>
+                    {
+                        if *loading {
+                            html!{<></>}
                         } else {
-                            html!(<div></div>)
+                            html!{
+                                <div
+                                class={
+                                    classes!(
+                                        "w-full",
+                                        "flex",
+                                        "justify-end",
+        
+                                    )
+                                }
+                            >
+                                <button
+                                tabindex={(*length + 1).to_string()}
+                                class={
+                                    classes!(
+                                        "w-24",
+                                        "h-16",
+                                        "text-2xl",
+                                        "font-bold",
+                                        "rounded-xl",
+                                        "bg-green-700",
+                                        "flex",
+                                        "items-center",
+                                        "justify-center",
+                                    )
+                                }
+                                onclick={on_submit} type="submit">
+                                {
+                                    if *game_over {
+                                        html!{
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" width="24px" fill="white">
+                                                <path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440h80q0 117 81.5 198.5T480-160q117 0 198.5-81.5T760-440q0-117-81.5-198.5T480-720h-6l62 62-56 58-160-160 160-160 56 58-62 62h6q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-440q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-80Z"/>
+                                            </svg>
+                                        }
+                                    }
+                                    else {
+                                        html!{
+                                            <svg class="w-12 h-12" fill="white" viewBox="0 0 24 24">
+                                                <path d="M7.629 12.172l-3.172-3.172a1 1 0 10-1.414 1.414l4.586 4.586a1 1 0 001.414 0l10-10a1 1 0 00-1.414-1.414l-9.172 9.172z" />
+                                            </svg>
+                                        }
+                                    }
+                                }
+                                </button>
+                            </div>
+                            }
                         }
                     }
+                   
                 </div>
-                </form>
-                <div class="!order-first">
-                { for submitted_words.iter().map(|e| {string_to_html(e)})}
-                </div>
-                    </div>
-                        <button
-                        tabindex={"5"}
-                        class={
-                            classes!(
-                                "w-72",
-                                "h-16",
-                                "text-2xl",
-                                "font-bold",
-                                "rounded-xl",
-                                "bg-green-700",
-                                "order-last",
-                            )
-                        }
-                        onclick={on_submit} type="submit">
-                        {
-                            if *game_over {
-                                "Play again"
-                            }
-                            else {
-                                "Submit"
-                            }
-                        }
-                        </button>
-                </div>
+            </div>
             }
         }
     };
