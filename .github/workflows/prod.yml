@@ -9,9 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -19,8 +17,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo
+            ~/.cargo/
+            ~/.cargo/bin/
+            ~/.cache/trunk/
             target/
+            node_modules/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
 
@@ -29,6 +30,25 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+          
+      - name: Add Rust target wasm32-unknown-unknown
+        run: rustup target add wasm32-unknown-unknown
+      
+      - name: Install Trunk
+        run: cargo install trunk
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Tailwind CSS
+        run: npm install -g tailwindcss
+
+      - name: Build Frontend
+        working-directory: ./frontend/
+        run: |
+          trunk build --release
 
       - name: Build and test code
         run: |
