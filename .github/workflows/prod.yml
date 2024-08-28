@@ -2,9 +2,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
 
 jobs:
   build:
@@ -49,6 +46,15 @@ jobs:
         working-directory: ./frontend/
         run: |
           trunk build --release
+
+      - name: Commit Frontend Release Build
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "dev@itsscb.de"
+          git add -A
+          git commit -m "release: frontend"
+          git push
+
 
       - name: Build and test code
         run: |
