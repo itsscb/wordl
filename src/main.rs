@@ -13,6 +13,7 @@ use tower_http::services::ServeDir;
 use tracing::info;
 
 #[shuttle_runtime::main]
+#[allow(clippy::unused_async)]
 async fn main() -> shuttle_axum::ShuttleAxum {
     let cors = CorsLayer::new()
         .allow_origin(Any) // Allow all origins; adjust as necessary
@@ -30,7 +31,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
 
 async fn word() -> String {
     let mut rng = rand::thread_rng();
-    WORDS.choose(&mut rng).unwrap().to_string()
+    WORDS.choose(&mut rng).map_or_else(String::new, |w| (*w).to_string())
 }
 
 async fn log_ip(req: Request<Body>, next: Next) -> Response {
