@@ -525,6 +525,7 @@ pub fn Home() -> Html {
                                 }
                             >
                                 <button
+                                disabled={input_values.iter().any(std::string::String::is_empty)}
                                 tabindex={(*length + 1).to_string()}
                                 class={
                                     classes!(
@@ -533,25 +534,25 @@ pub fn Home() -> Html {
                                         "text-2xl",
                                         "font-bold",
                                         "rounded-xl",
-                                        "bg-green-700",
                                         "flex",
                                         "items-center",
                                         "justify-center",
+                                        {if input_values.iter().any(std::string::String::is_empty) {"bg-gray-700"} else {"bg-green-600"}},
                                     )
                                 }
                                 onclick={on_submit} type="submit">
                                 {
                                     if *game_over {
                                         html!{
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" width="24px" fill="white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" fill="white">
                                                 <path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440h80q0 117 81.5 198.5T480-160q117 0 198.5-81.5T760-440q0-117-81.5-198.5T480-720h-6l62 62-56 58-160-160 160-160 56 58-62 62h6q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-440q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-80Z"/>
                                             </svg>
                                         }
                                     }
                                     else {
                                         html!{
-                                            <svg class="w-12 h-12" fill="white" viewBox="0 0 24 24">
-                                                <path d="M7.629 12.172l-3.172-3.172a1 1 0 10-1.414 1.414l4.586 4.586a1 1 0 001.414 0l10-10a1 1 0 00-1.414-1.414l-9.172 9.172z" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" fill="white">
+                                                <path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
                                             </svg>
                                         }
                                     }
