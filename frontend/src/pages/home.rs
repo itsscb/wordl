@@ -1,11 +1,7 @@
-use std::time::Duration;
-
 use gloo_net::http::Request;
-use wasm_bindgen_futures::spawn_local;
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
-use yew::platform::time::sleep;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
@@ -104,7 +100,6 @@ fn string_to_html(input: &[CharStatus<String>]) -> Html {
 
 #[allow(clippy::too_many_arguments)]
 fn fetch_new_word(
-    word_list: &UseStateHandle<WordList>,
     word: &UseStateHandle<String>,
     loading: &UseStateHandle<bool>,
     submitted_words: &UseStateHandle<Vec<Vec<CharStatus<String>>>>,
@@ -122,7 +117,7 @@ fn fetch_new_word(
     let node_refs = node_refs.clone();
     let result = result.clone();
     let word = word.clone();
-    // let word_list = word_list.clone();
+
     wasm_bindgen_futures::spawn_local(async move {
         loading.set(true);
         let res = Request::get(NEW_WORD_URI).send().await;
@@ -136,13 +131,12 @@ fn fetch_new_word(
                 game_over.set(false);
                 result.set(GameResult::Lose);
                 loading.set(false);
-                // sleep(Duration::from_secs(5)).await;
-                // word.set(word_list.get_word().to_uppercase());
             }
         }
     });
 }
 
+#[allow(dead_code)]
 fn fetch_words(state: &UseStateHandle<WordList>) {
     let state = state.clone();
     wasm_bindgen_futures::spawn_local(async move {
@@ -157,8 +151,6 @@ fn fetch_words(state: &UseStateHandle<WordList>) {
 
 #[function_component]
 pub fn Home() -> Html {
-    let word_list: UseStateHandle<WordList> = use_state(WordList::new);
-
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
     let curr_index: UseStateHandle<usize> = use_state(|| 0usize);
@@ -174,8 +166,6 @@ pub fn Home() -> Html {
     let result = use_state(|| GameResult::Lose);
 
     {
-        let word_list = word_list.clone();
-        let wl = word_list.clone();
         let handle = word.clone();
         let loading = loading.clone();
 
@@ -186,16 +176,8 @@ pub fn Home() -> Html {
         let node_refs = node_refs.clone();
         let result = result.clone();
 
-        // use_effect_with((), move |()| {
-        //     spawn_local(async move {
-        //         fetch_words(&wl);
-        //     });
-        // });
-
         use_effect_with((), move |()| {
-            // sleep(Duration::from_millis(200));
             fetch_new_word(
-                &word_list,
                 &handle,
                 &loading,
                 &submitted_words,
@@ -211,18 +193,18 @@ pub fn Home() -> Html {
     let game_over_check = {
         let word = word.clone();
         let submitted_words = submitted_words.clone();
-        let iv = input_values.clone();
+        let input_values = input_values.clone();
         let game_over = game_over.clone();
         let length = length.clone();
         let result = result.clone();
 
         Callback::from(move |_| {
             if submitted_words.iter().count() >= *length - 1
-                || crate::compare_strings(&word, &iv.join(""))
+                || crate::compare_strings(&word, &input_values.join(""))
                     .iter()
                     .all(|v| matches!(v, CharStatus::Match(_)))
             {
-                if crate::compare_strings(&word, &iv.join(""))
+                if crate::compare_strings(&word, &input_values.join(""))
                     .iter()
                     .all(|v| matches!(v, CharStatus::Match(_)))
                 {
@@ -235,9 +217,12 @@ pub fn Home() -> Html {
 
     let on_disabled = {
         let curr_index = curr_index.clone();
+        let input_values = input_values.clone();
 
         Callback::from(move |_e: MouseEvent| {
-            set_focus(*curr_index);
+            let index = input_values.iter().enumerate().find(|(_, v)| v.is_empty()).map_or(0, |(i,_)| i);
+            set_focus(index);
+            curr_index.set(index);
         })
     };
 
@@ -251,12 +236,10 @@ pub fn Home() -> Html {
         let loading = loading.clone();
         let result = result.clone();
         let curr_index = curr_index.clone();
-        let word_list = word_list.clone();
 
         Callback::from(move |_e: MouseEvent| {
             if *game_over {
                 curr_index.set(0);
-                let word_list = word_list.clone();
                 let input_values = input_values.clone();
                 let submitted_words = submitted_words.clone();
                 let game_over = game_over.clone();
@@ -266,7 +249,6 @@ pub fn Home() -> Html {
                 let node_refs = node_refs.clone();
                 let result = result.clone();
                 fetch_new_word(
-                    &word_list,
                     &word,
                     &loading,
                     &submitted_words,
@@ -381,7 +363,6 @@ pub fn Home() -> Html {
                         )
                     }
                 >
-                // <h1>{format!("{:?}",*word_list)}</h1>
                 <div
                     class={
                         classes!(
@@ -534,7 +515,6 @@ pub fn Home() -> Html {
                                 }
                             >
                                 <button
-                                // disabled={input_values.iter().any(std::string::String::is_empty)}
                                 tabindex={(*length + 1).to_string()}
                                 class={
                                     classes!(
