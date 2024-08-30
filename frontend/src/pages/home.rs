@@ -363,202 +363,207 @@ pub fn Home() -> Html {
                         )
                     }
                 >
-                <div
-                    class={
-                        classes!(
-                            "h-5/6",
-                            "flex",
-                            "flex-col",
-                            "items-center",
-                            "pt-12",
-                        )
-                    }
-                >
+                if *loading {
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 rotate-ease" viewBox="0 -960 960 960" fill="white">
+                        <path d="M320-160h320v-120q0-66-47-113t-113-47q-66 0-113 47t-47 113v120Zm160-360q66 0 113-47t47-113v-120H320v120q0 66 47 113t113 47ZM160-80v-80h80v-120q0-61 28.5-114.5T348-480q-51-32-79.5-85.5T240-680v-120h-80v-80h640v80h-80v120q0 61-28.5 114.5T612-480q51 32 79.5 85.5T720-280v120h80v80H160Zm320-80Zm0-640Z"/>
+                    </svg>
+                    <p>{"Loading..."}</p>
+                } else {
 
-                    <div class={
-                        classes!(
-                            "mb-12",
-                        )}>
-                    { for submitted_words.iter().map(|e| {string_to_html(e)})}
-                    </div>
-                    <form
-                    class="mb-4"
+                    <div
+                        class={
+                            classes!(
+                                "h-5/6",
+                                "flex",
+                                "flex-col",
+                                "items-center",
+                                "pt-12",
+                            )
+                        }
                     >
-                        <div
-                            class={
-                                classes!(
-                                    "flex",
-                                    "flex-row",
-                                    "font-bold",
-                                    "text-lg",
-                                    "gap-4",
-                                )
-                            }
+    
+                        <div class={
+                            classes!(
+                                "mb-12",
+                            )}>
+                        { for submitted_words.iter().map(|e| {string_to_html(e)})}
+                        </div>
+                        <form
+                        class="mb-4"
                         >
-                            {
-                                if *loading {
-                                    html!(<p>{"Loading..."}</p>)
+                            <div
+                                class={
+                                    classes!(
+                                        "flex",
+                                        "flex-row",
+                                        "font-bold",
+                                        "text-lg",
+                                        "gap-4",
+                                    )
                                 }
-                                else if *game_over {
-
-                                    let (text, color) = match *result {
-                                        GameResult::Win => {
-                                            ("FOUND", "bg-green-600")
-                                        },
-                                        GameResult::Lose => {
-                                            ("WANTED", "bg-red-600")
-                                        }
-                                    };
-                                    html! (
-                                        <div>
-                                        <h1>{
-                                            text
-                                        }</h1>
-                                            <ul
-                                                class={
-                                                    classes!(
-                                                        "flex",
-                                                        "flex-row",
-                                                        "gap-4",
-                                                        "notranslate",
-                                                    )
-                                                }
-                                            >
-                                        {
-                                            word.chars().map(|e|{
-
-                                                let text = e;
-                                                html!{
-                                            <li
+                            >
+                                {
+                                    if *game_over {
+    
+                                        let (text, color) = match *result {
+                                            GameResult::Win => {
+                                                ("FOUND", "bg-green-600")
+                                            },
+                                            GameResult::Lose => {
+                                                ("WANTED", "bg-red-600")
+                                            }
+                                        };
+                                        html! (
+                                            <div>
+                                            <h1>{
+                                                text
+                                            }</h1>
+                                                <ul
                                                     class={
                                                         classes!(
                                                             "flex",
-                                                            "items-center"
+                                                            "flex-row",
+                                                            "gap-4",
+                                                            "notranslate",
                                                         )
                                                     }
-                                            >
-                                            <span
-                                            class={
-                                                classes!(
-                                                    "w-16",
-                                                    "h-16",
-                                                    "text-center",
-                                                    "py-4",
-                                                    "font-bold",
-                                                    "text-lg",
-                                                    {color},
-                                                )
-                                            }
-                                        >
-                                            {text}
-                                            </span>
-                                        </li>
-                                        }}).collect::<Html>()
-                                        }
-                                        </ul>
-                                        </div>
-                                    )
-                                }
-                                else if !*game_over {
-                                    node_refs.iter().enumerate().map(|(index, node_ref)| {
-                                        let on_focus = {
-                                            let curr_index = curr_index.clone();
-
-                                            Callback::from(move |e: FocusEvent| {
-                                                let target = e.target_unchecked_into::<web_sys::HtmlElement>();
-                                                if let Some(index) = target.get_attribute("tabindex") {
-                                                    if let Ok(i) = index.parse::<usize>() {
-                                                        curr_index.set(i);
-                                                    }
-                                                }
-
-                                            })
-                                        };
-                                        html! {
-                                            <input
-                                                onkeyup={on_enter.clone()}
-                                                oninput={on_input.clone()}
-                                                tabindex={index.to_string()}
-                                                ref={node_ref.clone()}
-                                                value={input_values[index].clone()}
-                                                onfocus={on_focus.clone()}
+                                                >
+                                            {
+                                                word.chars().map(|e|{
+    
+                                                    let text = e;
+                                                    html!{
+                                                <li
+                                                        class={
+                                                            classes!(
+                                                                "flex",
+                                                                "items-center"
+                                                            )
+                                                        }
+                                                >
+                                                <span
                                                 class={
                                                     classes!(
                                                         "w-16",
                                                         "h-16",
                                                         "text-center",
-                                                        "bg-gray-600"
+                                                        "py-4",
+                                                        "font-bold",
+                                                        "text-lg",
+                                                        {color},
                                                     )
                                                 }
-                                            />
-                                        }
-                                    }).collect::<Html>()
-                                } else {
-                                    html!(<div></div>)
-                                }
-                            }
-                        </div>
-                    </form>
-                    {
-                        if *loading {
-                            html!{<></>}
-                        } else {
-                            html!{
-                                <div
-                                class={
-                                    classes!(
-                                        "w-full",
-                                        "flex",
-                                        "justify-end",
-
-                                    )
-                                }
-                            >
-                                <button
-                                tabindex={(*length + 1).to_string()}
-                                class={
-                                    classes!(
-                                        "w-24",
-                                        "h-16",
-                                        "text-2xl",
-                                        "font-bold",
-                                        "rounded-xl",
-                                        "flex",
-                                        "items-center",
-                                        "justify-center",
-                                        {if input_values.iter().any(std::string::String::is_empty) && !*game_over {"bg-gray-700"} else {"bg-green-600"}},
-                                    )
-                                }
-                                onclick={if input_values.iter().any(std::string::String::is_empty) && !*game_over {on_disabled} else {on_submit}} type="submit">
-                                {
-                                    if *game_over {
-                                        html!{
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" fill="white">
-                                                <path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440h80q0 117 81.5 198.5T480-160q117 0 198.5-81.5T760-440q0-117-81.5-198.5T480-720h-6l62 62-56 58-160-160 160-160 56 58-62 62h6q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-440q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-80Z"/>
-                                            </svg>
-                                        }
+                                            >
+                                                {text}
+                                                </span>
+                                            </li>
+                                            }}).collect::<Html>()
+                                            }
+                                            </ul>
+                                            </div>
+                                        )
                                     }
-                                    else if input_values.iter().any(std::string::String::is_empty) {
-                                        html!{
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" width="24px" fill="white">
-                                                <path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q54 0 104-17.5t92-50.5L228-676q-33 42-50.5 92T160-480q0 134 93 227t227 93Zm252-124q33-42 50.5-92T800-480q0-134-93-227t-227-93q-54 0-104 17.5T284-732l448 448Z"/>
-                                            </svg>
-                                        }
+                                    else if !*game_over {
+                                        node_refs.iter().enumerate().map(|(index, node_ref)| {
+                                            let on_focus = {
+                                                let curr_index = curr_index.clone();
+    
+                                                Callback::from(move |e: FocusEvent| {
+                                                    let target = e.target_unchecked_into::<web_sys::HtmlElement>();
+                                                    if let Some(index) = target.get_attribute("tabindex") {
+                                                        if let Ok(i) = index.parse::<usize>() {
+                                                            curr_index.set(i);
+                                                        }
+                                                    }
+    
+                                                })
+                                            };
+                                            html! {
+                                                <input
+                                                    onkeyup={on_enter.clone()}
+                                                    oninput={on_input.clone()}
+                                                    tabindex={index.to_string()}
+                                                    ref={node_ref.clone()}
+                                                    value={input_values[index].clone()}
+                                                    onfocus={on_focus.clone()}
+                                                    class={
+                                                        classes!(
+                                                            "w-16",
+                                                            "h-16",
+                                                            "text-center",
+                                                            "bg-gray-600"
+                                                        )
+                                                    }
+                                                />
+                                            }
+                                        }).collect::<Html>()
                                     } else {
-                                        html!{
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" fill="white">
-                                                <path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
-                                            </svg>
-                                        }
+                                        html!(<div></div>)
                                     }
                                 }
-                                </button>
                             </div>
+                        </form>
+                        {
+                            if *loading {
+                                html!{<></>}
+                            } else {
+                                html!{
+                                    <div
+                                    class={
+                                        classes!(
+                                            "w-full",
+                                            "flex",
+                                            "justify-end",
+    
+                                        )
+                                    }
+                                >
+                                    <button
+                                    tabindex={(*length + 1).to_string()}
+                                    class={
+                                        classes!(
+                                            "w-24",
+                                            "h-16",
+                                            "text-2xl",
+                                            "font-bold",
+                                            "rounded-xl",
+                                            "flex",
+                                            "items-center",
+                                            "justify-center",
+                                            {if input_values.iter().any(std::string::String::is_empty) && !*game_over {"bg-gray-700"} else {"bg-green-600"}},
+                                        )
+                                    }
+                                    onclick={if input_values.iter().any(std::string::String::is_empty) && !*game_over {on_disabled} else {on_submit}} type="submit">
+                                    {
+                                        if *game_over {
+                                            html!{
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 rotate-box" viewBox="0 -960 960 960" fill="white">
+                                                    <path d="M440-122q-121-15-200.5-105.5T160-440q0-66 26-126.5T260-672l57 57q-38 34-57.5 79T240-440q0 88 56 155.5T440-202v80Zm80 0v-80q87-16 143.5-83T720-440q0-100-70-170t-170-70h-3l44 44-56 56-140-140 140-140 56 56-44 44h3q134 0 227 93t93 227q0 121-79.5 211.5T520-122Z"/>
+                                                </svg>
+                                            }
+                                        }
+                                        else if input_values.iter().any(std::string::String::is_empty) {
+                                            html!{
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" width="24px" fill="white">
+                                                    <path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q54 0 104-17.5t92-50.5L228-676q-33 42-50.5 92T160-480q0 134 93 227t227 93Zm252-124q33-42 50.5-92T800-480q0-134-93-227t-227-93q-54 0-104 17.5T284-732l448 448Z"/>
+                                                </svg>
+                                            }
+                                        } else {
+                                            html!{
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" viewBox="0 -960 960 960" fill="white">
+                                                    <path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
+                                                </svg>
+                                            }
+                                        }
+                                    }
+                                    </button>
+                                </div>
+                                }
                             }
                         }
-                    }
-
-                </div>
+    
+                    </div>
+                }
             </div>
             }
         }

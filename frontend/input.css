@@ -2,13 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+.rotate-box {
+  animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.rotate-ease {
+  animation: rotate-ease 2s ease-in-out infinite;
+  /* Total duration of 4 seconds */
+}
+
+@keyframes rotate-ease {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  45% {
+    transform: rotate(180deg);
+    /* Rotate to 180 degrees */
+  }
+
+  55% {
+    transform: rotate(180deg);
+    /* Hold at 180 degrees */
+  }
+
+  100% {
+    transform: rotate(360deg);
+    /* Rotate to 360 degrees */
+  }
+}
+
 .logo {
   @apply absolute;
 }
 
 .logo-fadein-right {
-  position:relative;
-  animation: logo-fadein-right 1s ;
+  position: relative;
+  animation: logo-fadein-right 1s;
 }
 
 .validation-error {
@@ -20,17 +60,21 @@
     transform: translateX(-200%);
     opacity: 0;
   }
-  70%{
+
+  70% {
     transform: translateX(0);
     opacity: 0.7;
   }
-  80%{
+
+  80% {
     opacity: 1;
   }
-  90%{
+
+  90% {
     opacity: 0.8;
   }
-  100%{
+
+  100% {
     opacity: 1;
   }
 }
@@ -46,75 +90,96 @@
     transform: translateX(500%);
     opacity: 0;
   }
-  70%{
+
+  70% {
     opacity: 0.7;
   }
-  80%{
+
+  80% {
     transform: translateX(0);
     opacity: 1;
   }
-  90%{
+
+  90% {
     opacity: 0.8;
   }
-  100%{
+
+  100% {
     opacity: 1;
   }
 }
+
 @keyframes logo-fadein-left {
-  from{
+  from {
     left: -200%;
     opacity: 0.5;
   }
-  to{
+
+  to {
     left: 0;
     opacity: 1;
   }
 }
 
 
-.fade-in{
-  position:relative;
-animation:fadein 0.4s}
-@keyframes fadein{
-  from{
-  left:200%;
-opacity:0;
-} to{
-left:0;
-opacity:1}
+.fade-in {
+  position: relative;
+  animation: fadein 0.4s
 }
 
-.fade-out{
-  position:relative;
-animation:fadeout 0.4s}
-@keyframes fadeout{
-  from{
-  left:0;
-opacity:0
-} to{
-left:-200%;
-opacity:1}
+@keyframes fadein {
+  from {
+    left: 200%;
+    opacity: 0;
+  }
+
+  to {
+    left: 0;
+    opacity: 1
+  }
+}
+
+.fade-out {
+  position: relative;
+  animation: fadeout 0.4s
+}
+
+@keyframes fadeout {
+  from {
+    left: 0;
+    opacity: 0
+  }
+
+  to {
+    left: -200%;
+    opacity: 1
+  }
 }
 
 .mail-animation {
-  position:relative;
-  animation:mail-animation 2s infinite;
+  position: relative;
+  animation: mail-animation 2s infinite;
 }
+
 @keyframes mail-animation {
   0% {
     left: -20%;
     opacity: 0.5;
   }
+
   20% {
     opacity: 1;
   }
-  70%{
+
+  70% {
     left: 20%;
   }
-  80%{
+
+  80% {
     opacity: 1;
   }
-  100%{
+
+  100% {
     left: 100%;
     opacity: 0;
   }
@@ -125,24 +190,24 @@ opacity:1}
 }
 
 .cx-date-picker[type="date"]::-webkit-calendar-picker-indicator {
-    background: transparent;
-    bottom: 0;
-    color: transparent;
-    cursor: pointer;
-    height: auto;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: auto;
+  background: transparent;
+  bottom: 0;
+  color: transparent;
+  cursor: pointer;
+  height: auto;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: auto;
 }
 
 .text-danger {
-  color: rgba(255, 82, 82,1.0);
+  color: rgba(255, 82, 82, 1.0);
 }
 
 .bg-danger {
-  background-color: rgba(255, 82, 82,1.0);
+  background-color: rgba(255, 82, 82, 1.0);
 }
 
 .min-height {
@@ -150,53 +215,53 @@ opacity:1}
 }
 
 .text-tertiary {
-  color: rgba(132, 129, 122,1.0);
+  color: rgba(132, 129, 122, 1.0);
 }
 
 .bg-tertriary {
-  background-color: rgba(132, 129, 122,1.0);
+  background-color: rgba(132, 129, 122, 1.0);
 }
 
 .border-primary {
-  border-color: rgba(51,217,178,1.0);
+  border-color: rgba(51, 217, 178, 1.0);
 }
 
 .border-error {
-  border-color: rgba(255, 82, 82,1.0) !important;
+  border-color: rgba(255, 82, 82, 1.0) !important;
 }
+
 .accent-primary {
-  accent-color: rgba(51, 217, 178,1.0);
+  accent-color: rgba(51, 217, 178, 1.0);
 }
 
 .text-primary {
-  color: rgba(51, 217, 178,1.0);
+  color: rgba(51, 217, 178, 1.0);
 }
 
 .text-primary-dark {
-  color: rgba(33, 140, 116,1.0);
+  color: rgba(33, 140, 116, 1.0);
 }
 
 .bg-primary-dark {
-  background-color: rgba(33, 140, 116,1.0);
+  background-color: rgba(33, 140, 116, 1.0);
 }
 
 .bg-primary {
-  background-color: rgba(51, 217, 178,1.0);
+  background-color: rgba(51, 217, 178, 1.0);
 }
 
 .text-secondary {
-  color: rgba(52, 172, 224,1.0);
+  color: rgba(52, 172, 224, 1.0);
 }
 
 .text-secondary-dark {
-  color: rgba(34, 112, 147,1.0);
+  color: rgba(34, 112, 147, 1.0);
 }
 
 .bg-secondary-dark {
-  background-color: rgba(34, 112, 147,1.0);
+  background-color: rgba(34, 112, 147, 1.0);
 }
 
 .bg-secondary {
-  background-color: rgba(52, 172, 224,1.0);
+  background-color: rgba(52, 172, 224, 1.0);
 }
-
