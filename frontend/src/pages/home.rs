@@ -338,6 +338,7 @@ pub fn Home() -> Html {
 
         Callback::from(move |e: InputEvent| {
             if let Some(value) = e.data() {
+                let value = value.to_uppercase();
                 let index = *curr_index;
                 let mut values = (*input_values).clone();
 
@@ -351,7 +352,7 @@ pub fn Home() -> Html {
                     curr_index.set(new_index);
                     set_focus(new_index);
                 } else if value.len() == 1 && value.chars().all(char::is_alphabetic) {
-                    values[index] = value.to_uppercase();
+                    values[index] = value;
                     input_values.set(values);
                     if index < *length {
                         let new_index = index + 1;
@@ -545,10 +546,10 @@ pub fn Home() -> Html {
                                         "flex",
                                         "items-center",
                                         "justify-center",
-                                        {if input_values.iter().any(std::string::String::is_empty) {"bg-gray-700"} else {"bg-green-600"}},
+                                        {if input_values.iter().any(std::string::String::is_empty) && !*game_over {"bg-gray-700"} else {"bg-green-600"}},
                                     )
                                 }
-                                onclick={if input_values.iter().any(std::string::String::is_empty) {on_disabled} else {on_submit}} type="submit">
+                                onclick={if input_values.iter().any(std::string::String::is_empty) && !*game_over {on_disabled} else {on_submit}} type="submit">
                                 {
                                     if *game_over {
                                         html!{
