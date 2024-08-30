@@ -235,9 +235,12 @@ pub fn Home() -> Html {
 
     let on_disabled = {
         let curr_index = curr_index.clone();
+        let input_values = input_values.clone();
 
         Callback::from(move |_e: MouseEvent| {
-            set_focus(*curr_index);
+            let index = input_values.iter().enumerate().find(|(_, v)| v.is_empty()).map_or(0, |(i,_)| i);
+            set_focus(index);
+            curr_index.set(index);
         })
     };
 
