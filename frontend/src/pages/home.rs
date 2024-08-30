@@ -1,11 +1,7 @@
-use std::time::Duration;
-
 use gloo_net::http::Request;
-use wasm_bindgen_futures::spawn_local;
 use web_sys::wasm_bindgen::convert::OptionIntoWasmAbi;
 use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
-use yew::platform::time::sleep;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
