@@ -362,8 +362,8 @@ pub fn Home() -> Html {
                             "flex",
                             "flex-col",
                             "items-center",
+                            "justify-center",
                             "h-[90vh]",
-                            "pt-12",
                         )
                     }
                 >
@@ -475,7 +475,7 @@ pub fn Home() -> Html {
                                                 Callback::from(move |e: FocusEvent| {
                                                     let target = e.target_unchecked_into::<web_sys::HtmlElement>();
                                                     if let Some(index) = target.get_attribute("tabindex") {
-                                                        if let Ok(i) = index.parse::<usize>() {
+                                                        if let Ok(i) = index.replace('-', "").parse::<usize>() {
                                                             curr_index.set(i);
                                                         }
                                                     }
@@ -488,15 +488,7 @@ pub fn Home() -> Html {
                                             };
                                             html! {
                                                 <input
-                                                    aria-label={format!("letter-{}", match index {
-                                                        0 => "one",
-                                                        1 => "two",
-                                                        2 => "three",
-                                                        3 => "four",
-                                                        4 => "five",
-                                                        _ => "",
-                                                        
-                                                    })}
+                                                    aria-label={format!("letter-{index}")}
                                                     onkeyup={on_enter.clone()}
                                                     oninput={on_input.clone()}
                                                     tabindex={ format!("{prefix}{index}")}
