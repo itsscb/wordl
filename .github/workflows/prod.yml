@@ -14,23 +14,31 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
 
+      - name: install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      - name: cache trunk
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/trunk
+            ~/.cache/trunk/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('~/.cargo/bin/trunk') }}
+          restore-keys: ${{ runner.os }}-trunk
+
       - name: cache dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/
             ~/.cargo/bin/
-            ~/.cache/trunk/
             target/
             node_modules/
           key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
-
-      - name: install rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
           
       - name: add rust target wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
