@@ -10,6 +10,7 @@ use http::Method;
 use rand::seq::SliceRandom;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
+use tower_http::compression::CompressionLayer;
 use tracing::info;
 
 #[shuttle_runtime::main]
@@ -21,7 +22,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         .allow_headers(Any);
 
     let router = Router::new()
-        .nest_service("/", ServeDir::new("frontend/dist"))
+        .nest_service("/", ServeDir::new("frontend/dist").precompressed_br().precompressed_gzip()).layer(CompressionLayer::new())
         .route("/word", get(word))
         .layer(middleware::from_fn(log_ip))
         .layer(cors);
