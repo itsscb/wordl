@@ -15,10 +15,14 @@ static WORDS_URI: &str = "https://wordl.shuttleapp.rs/public/wordlist.json";
 static MAX_TRIES: usize = 5;
 
 fn set_focus(index: usize) {
+    let prefix = match index {
+        0 => "",
+        _ => "-"
+    };
     if let Some(w) = web_sys::window() {
         if let Some(d) = w.document() {
             if let Some(n) = d
-                .query_selector(&format!("[tabindex='{index}']"))
+                .query_selector(&format!("[tabindex='{prefix}{index}']"))
                 .ok()
                 .flatten()
             {
@@ -478,11 +482,24 @@ pub fn Home() -> Html {
     
                                                 })
                                             };
+                                            let prefix = match index {
+                                                0 => String::new(),
+                                                _ => "-".to_owned(),
+                                            };
                                             html! {
                                                 <input
+                                                    aria-label={format!("letter-{}", match index {
+                                                        0 => "one",
+                                                        1 => "two",
+                                                        2 => "three",
+                                                        3 => "four",
+                                                        4 => "five",
+                                                        _ => "",
+                                                        
+                                                    })}
                                                     onkeyup={on_enter.clone()}
                                                     oninput={on_input.clone()}
-                                                    tabindex={index.to_string()}
+                                                    tabindex={ format!("{prefix}{index}")}
                                                     ref={node_ref.clone()}
                                                     value={input_values[index].clone()}
                                                     onfocus={on_focus.clone()}
@@ -519,7 +536,8 @@ pub fn Home() -> Html {
                                     }
                                 >
                                     <button
-                                    tabindex={(*length + 1).to_string()}
+                                    aria-label={if *game_over { "Play Again"} else { "Submit"}}
+                                    tabindex={format!("-{}",*length + 1)}
                                     class={
                                         classes!(
                                             "w-24",
