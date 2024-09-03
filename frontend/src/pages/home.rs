@@ -363,7 +363,7 @@ pub fn Home() -> Html {
                             "flex-col",
                             "items-center",
                             "justify-center",
-                            "h-[90vh]",
+                            if *loading { "h-[90vh]" } else { "" },
                         )
                     }
                 >
