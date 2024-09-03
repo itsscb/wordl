@@ -49,7 +49,11 @@
       align-items: center;
     }
   </style>
-  <link data-trunk href="./public/styles.css" rel="css">
+  <link data-trunk href="./public/styles.css" rel="preload" as="style" onload="this.onload=null;this.rel='css'">
+  <noscript>
+    <link rel="css" href="./public/styles.css">
+  </noscript>
+  <!-- <link data-trunk href="./public/styles.css" rel="css"> -->
   <link data-trunk rel="copy-file" href="public/robots.txt" data-target-path="/" />
   <!-- <link data-trunk href="./assets/favicon.ico" rel="icon" type="image/x-icon"> -->
   <link data-trunk rel="copy-dir" href="public">
