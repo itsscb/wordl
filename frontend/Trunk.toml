@@ -5,3 +5,6 @@ command_arguments = ["-i","input.css","-o","public/styles.css","--minify"]
 
 [serve]
 address = "0.0.0.0"
+
+[build]
+minify = "on_release"
