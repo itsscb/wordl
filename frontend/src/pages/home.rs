@@ -230,6 +230,8 @@ pub fn Home() -> Html {
                     .all(|v| matches!(v, CharStatus::Match(_)))
                 {
                     result.set(Status::Win(submitted_words.iter().count()));
+                } else {
+                    result.set(Status::Lose(MAX_TRIES));
                 }
                 game_over.set(true);
             }
