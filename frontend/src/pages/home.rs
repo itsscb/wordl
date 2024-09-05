@@ -5,7 +5,7 @@ use web_sys::HtmlElement;
 use yew::prelude::*;
 use yew::{classes, function_component, Callback, Html};
 
-use crate::pages::game::GameResult;
+use crate::pages::game::{Game, Status};
 use crate::CharStatus;
 
 use super::game::WordList;
@@ -17,7 +17,7 @@ static MAX_TRIES: usize = 5;
 fn set_focus(index: usize) {
     let prefix = match index {
         0 => "",
-        _ => "-"
+        _ => "-",
     };
     if let Some(w) = web_sys::window() {
         if let Some(d) = w.document() {
@@ -111,7 +111,7 @@ fn fetch_new_word(
     game_over: &UseStateHandle<bool>,
     length: &UseStateHandle<usize>,
     node_refs: &UseStateHandle<Vec<NodeRef>>,
-    result: &UseStateHandle<GameResult>,
+    result: &UseStateHandle<Status>,
 ) {
     let loading = loading.clone();
     let submitted_words = submitted_words.clone();
@@ -133,7 +133,7 @@ fn fetch_new_word(
                 word.set(w.to_uppercase());
                 submitted_words.set(Vec::with_capacity(MAX_TRIES));
                 game_over.set(false);
-                result.set(GameResult::Lose);
+                result.set(Status::New);
                 loading.set(false);
             }
         }
@@ -153,8 +153,23 @@ fn fetch_words(state: &UseStateHandle<WordList>) {
     });
 }
 
+fn new_game(game: &UseStateHandle<Game>) {
+    let game = game.clone();
+    wasm_bindgen_futures::spawn_local(async move {
+        let res = Request::get(NEW_WORD_URI).send().await;
+        if let Ok(r) = res {
+            if let Ok(w) = r.text().await {
+                let mut g = (*game).clone();
+                g.start(w);
+                game.set(g);
+            }
+        }
+    });
+}
+
 #[function_component]
 pub fn Home() -> Html {
+    let game: UseStateHandle<Game> = use_state(Game::new);
     let word: UseStateHandle<String> = use_state(String::new);
     let loading: UseStateHandle<bool> = use_state(|| true);
     let curr_index: UseStateHandle<usize> = use_state(|| 0usize);
@@ -167,9 +182,10 @@ pub fn Home() -> Html {
     let input_values: UseStateHandle<Vec<String>> = use_state(|| vec![String::new(); *length]);
     let game_over = use_state(|| false);
 
-    let result = use_state(|| GameResult::Lose);
+    let result = use_state(|| Status::New);
 
     {
+        let game = game.clone();
         let handle = word.clone();
         let loading = loading.clone();
 
@@ -181,6 +197,7 @@ pub fn Home() -> Html {
         let result = result.clone();
 
         use_effect_with((), move |()| {
+            new_game(&game);
             fetch_new_word(
                 &handle,
                 &loading,
@@ -212,7 +229,7 @@ pub fn Home() -> Html {
                     .iter()
                     .all(|v| matches!(v, CharStatus::Match(_)))
                 {
-                    result.set(GameResult::Win);
+                    result.set(Status::Win(submitted_words.iter().count()));
                 }
                 game_over.set(true);
             }
@@ -224,13 +241,19 @@ pub fn Home() -> Html {
         let input_values = input_values.clone();
 
         Callback::from(move |_e: MouseEvent| {
-            let index = input_values.iter().enumerate().find(|(_, v)| v.is_empty()).map_or(0, |(i,_)| i);
+            let index = input_values
+                .iter()
+                .enumerate()
+                .find(|(_, v)| v.is_empty())
+                .map_or(0, |(i, _)| i);
             set_focus(index);
             curr_index.set(index);
         })
     };
 
     let on_submit = {
+        let game = game.clone();
+
         let input_values = input_values.clone();
         let submitted_words = submitted_words.clone();
         let game_over = game_over.clone();
@@ -268,6 +291,10 @@ pub fn Home() -> Html {
             if !values.iter().all(|v| !v.is_empty()) {
                 return;
             }
+            let mut g = (*game).clone();
+            g.submit_answer(&input_values);
+            game.set(g);
+
             let mut new_items = (*submitted_words).clone();
             new_items.push(crate::compare_strings(&word, &values.join("")));
             submitted_words.set(new_items);
@@ -367,6 +394,30 @@ pub fn Home() -> Html {
                         )
                     }
                 >
+                // {
+                //     match game.current_status() {
+                //         Status::New => html!{
+                //             <>
+                //             <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 rotate-ease" viewBox="0 -960 960 960" fill="white">
+                //                 <path d="M320-160h320v-120q0-66-47-113t-113-47q-66 0-113 47t-47 113v120Zm160-360q66 0 113-47t47-113v-120H320v120q0 66 47 113t113 47ZM160-80v-80h80v-120q0-61 28.5-114.5T348-480q-51-32-79.5-85.5T240-680v-120h-80v-80h640v80h-80v120q0 61-28.5 114.5T612-480q51 32 79.5 85.5T720-280v120h80v80H160Zm320-80Zm0-640Z"/>
+                //             </svg>
+                //             <p>{"Loading..."}</p>
+                //             </>
+                //         },
+                //         Status::Win(tries) => html!{
+                //             <p>{format!("WIN: {tries}")}</p>
+                //         },
+                //         Status::Lose(tries) => html!{
+                //             <p>{format!("LOSE: {tries}")}</p>
+                //         },
+                //         Status::InProgress => html!{
+                //             <div>
+                //                 <p>{"IN PROGRESS"}</p>
+                //                 <p>{&game.word}</p>
+                //             </div>
+                //         },
+                //     }
+                // }
                 if *loading {
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 rotate-ease" viewBox="0 -960 960 960" fill="white">
                         <path d="M320-160h320v-120q0-66-47-113t-113-47q-66 0-113 47t-47 113v120Zm160-360q66 0 113-47t47-113v-120H320v120q0 66 47 113t113 47ZM160-80v-80h80v-120q0-61 28.5-114.5T348-480q-51-32-79.5-85.5T240-680v-120h-80v-80h640v80h-80v120q0 61-28.5 114.5T612-480q51 32 79.5 85.5T720-280v120h80v80H160Zm320-80Zm0-640Z"/>
@@ -385,7 +436,7 @@ pub fn Home() -> Html {
                             )
                         }
                     >
-    
+
                         <div class={
                             classes!(
                                 "mb-12",
@@ -408,14 +459,17 @@ pub fn Home() -> Html {
                             >
                                 {
                                     if *game_over {
-    
+
                                         let (text, color) = match *result {
-                                            GameResult::Win => {
+                                            Status::Win(_) => {
                                                 ("FOUND", "bg-green-600")
                                             },
-                                            GameResult::Lose => {
+                                            Status::Lose(_) => {
                                                 ("WANTED", "bg-red-600")
-                                            }
+                                            },
+                                            _ => {
+                                                ("NEW", "bg-gray-600")
+                                            },
                                         };
                                         html! (
                                             <div>
@@ -434,7 +488,7 @@ pub fn Home() -> Html {
                                                 >
                                             {
                                                 word.chars().map(|e|{
-    
+
                                                     let text = e;
                                                     html!{
                                                 <li
@@ -471,7 +525,7 @@ pub fn Home() -> Html {
                                         node_refs.iter().enumerate().map(|(index, node_ref)| {
                                             let on_focus = {
                                                 let curr_index = curr_index.clone();
-    
+
                                                 Callback::from(move |e: FocusEvent| {
                                                     let target = e.target_unchecked_into::<web_sys::HtmlElement>();
                                                     if let Some(index) = target.get_attribute("tabindex") {
@@ -479,7 +533,7 @@ pub fn Home() -> Html {
                                                             curr_index.set(i);
                                                         }
                                                     }
-    
+
                                                 })
                                             };
                                             let prefix = match index {
@@ -523,7 +577,7 @@ pub fn Home() -> Html {
                                             "w-full",
                                             "flex",
                                             "justify-end",
-    
+
                                         )
                                     }
                                 >
@@ -571,7 +625,7 @@ pub fn Home() -> Html {
                                 }
                             }
                         }
-    
+
                     </div>
                 }
             </div>
