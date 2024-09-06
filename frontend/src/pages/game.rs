@@ -83,30 +83,28 @@ impl Game {
     pub fn current_status(&self) -> Status {
         self.word.as_ref().map_or(Status::New, |_| {
             let word_count = self.submitted_words.len();
-            if self.tries == 0 {
-                Status::New
-            } else if self.tries < MAX_TRIES {
-                if self
+            match self.tries {
+                0 => Status::New,
+                1..MAX_TRIES => self
                     .submitted_words
                     .last()
-                    .unwrap()
-                    .iter()
-                    .all(|v| matches!(v, CharStatus::Match(_)))
-                {
-                    Status::Win(word_count)
-                } else {
-                    Status::InProgress
-                }
-            } else if self
-                .submitted_words
-                .last()
-                .unwrap()
-                .iter()
-                .all(|v| matches!(v, CharStatus::Match(_)))
-            {
-                Status::Win(word_count)
-            } else {
-                Status::Lose(word_count)
+                    .map_or(Status::InProgress, |words| {
+                        if words.iter().all(|v| matches!(v, CharStatus::Match(_))) {
+                            Status::Win(word_count)
+                        } else {
+                            Status::InProgress
+                        }
+                    }),
+                _ => self
+                    .submitted_words
+                    .last()
+                    .map_or(Status::Lose(word_count), |words| {
+                        if words.iter().all(|v| matches!(v, CharStatus::Match(_))) {
+                            Status::Win(word_count)
+                        } else {
+                            Status::Lose(word_count)
+                        }
+                    }),
             }
         })
     }
