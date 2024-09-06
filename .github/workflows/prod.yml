@@ -54,7 +54,7 @@ jobs:
           restore-keys: ${{ runner.os }}-trunk
           
       - name: install trunk
-        run: cargo install trunk
+        run: cargo install trunk || echo "trunk already installed"
 
       - name: install node.js
         uses: actions/setup-node@v4
