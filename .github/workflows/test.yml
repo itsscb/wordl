@@ -1,0 +1,41 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.rustup/
+            ~/.cargo/registry/
+            ~/.cargo/bin/
+            ~/.cache/trunk/
+            frontend/target/
+            target/
+            frontend/node_modules/
+            node_modules/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock', '~/.cargo/bin/trunk', '**/rust-toolchain.toml', '**/rust-toolchain') }}
+          restore-keys: ${{ runner.os }}-cargo-wordl
+
+      - name: install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          
+      - name: run frontend tests
+        working-directory: ./frontend/
+        run: |
+          cargo test

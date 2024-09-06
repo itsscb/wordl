@@ -21,12 +21,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            ~/.rustup/
             ~/.cargo/registry/
             ~/.cargo/bin/
+            ~/.cache/trunk/
             frontend/target/
             target/
             node_modules/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock', '~/.cargo/bin/trunk', '**/rust-toolchain.toml', '**/rust-toolchain') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
 
       - name: install rust
@@ -37,21 +39,11 @@ jobs:
         
       - name: add rust target wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
-          
   
       - name: run frontend tests
         working-directory: ./frontend/
         run: |
           cargo test
-
-      - name: cache trunk
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/trunk
-            ~/.cache/trunk/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('~/.cargo/bin/trunk') }}
-          restore-keys: ${{ runner.os }}-trunk
           
       - name: install trunk
         run: cargo install trunk || echo "trunk already installed"
@@ -62,7 +54,8 @@ jobs:
           node-version: 20
 
       - name: install tailwindcss
-        run: npm install -g tailwindcss
+        working-directory: ./frontend/
+        run: npm i
 
       - name: create ./frontend/dist dir
         run: mkdir -p ./frontend/dist
@@ -100,9 +93,10 @@ jobs:
           name: frontend-artifacts
           path: ./frontend/dist
   
-      - name: remove ./frontend/dist from .gitignore
+      - name: remove items from .gitignore
         run: |
           sed -i '/frontend\/dist\//s/^/#/' .gitignore
+          sed -i '/frontend\/public\/styles.css/s/^/#/' .gitignore
 
       - name: commit frontend build
         run: |
