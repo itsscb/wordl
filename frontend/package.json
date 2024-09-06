@@ -1,5 +1,6 @@
 {
+  "name": "wordl-frontend",
   "devDependencies": {
-    "tailwindcss": "^3.4.3"
+    "tailwindcss": "^3.4.10"
   }
 }

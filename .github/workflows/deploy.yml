@@ -1,0 +1,125 @@
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.rustup/
+            ~/.cargo/registry/
+            ~/.cargo/bin/
+            ~/.cache/trunk/
+            frontend/target/
+            frontend/node_modules/
+            target/
+            node_modules/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock', '~/.cargo/bin/trunk', './frontend/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-cargo-wordl
+
+      - name: install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+        
+      - name: add rust target wasm32-unknown-unknown
+        run: rustup target add wasm32-unknown-unknown
+  
+      - name: run frontend tests
+        working-directory: ./frontend/
+        run: |
+          cargo test
+
+      - name: run backend tests
+        working-directory: .
+        run: |
+          cargo test
+            
+      - name: install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
+
+      - name: install trunk
+        run: |
+          cargo binstall trunk --no-confirm
+
+      - name: install node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install tailwindcss
+        working-directory: ./frontend/
+        run: |
+          npm i -D
+
+      - name: create ./frontend/dist dir
+        run: mkdir -p ./frontend/dist
+
+      - name: build frontend
+        working-directory: ./frontend/
+        run: |
+          sed -i 's/tailwindcss/npx/' Trunk.toml
+          sed -i 's/command_arguments \= \[/command_arguments \= \[\"tailwindcss\",/' Trunk.toml
+          cat Trunk.toml
+          sed -i '/frontend\/public\/styles.css/s/^/#/' ../.gitignore
+          trunk build --release
+
+      - name: upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifacts
+          path: ./frontend/dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:          
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup git
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      - name: remove ./frontend/dist dir
+        run: |
+          rm -rf ./frontend/dist
+  
+      - name: download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-artifacts
+          path: ./frontend/dist
+  
+      - name: remove items from .gitignore
+        run: |
+          sed -i '/frontend\/dist\//s/^/#/' .gitignore
+          sed -i '/frontend\/public\/styles.css/s/^/#/' .gitignore
+
+      - name: commit frontend build
+        run: |
+          git add frontend/dist -f
+          git add .gitignore
+          git commit -m "[${{github.run_attempt }}] ${{github.event.pusher}} > ${{ github.repository }}@${{ github.event.head_commit}}" || echo "No changes to commit"
+
+      - name: List downloaded artifacts
+        run: ls -laR ./frontend/dist
+
+      - uses: shuttle-hq/deploy-action@main
+        with:
+          deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
+          working-directory: .
