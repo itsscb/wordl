@@ -49,7 +49,7 @@ jobs:
 
       - name: install trunk
         run: |
-          cargo binstall trunk
+          cargo binstall trunk --no-confirm
 
       - name: install node.js
         uses: actions/setup-node@v4
@@ -60,7 +60,7 @@ jobs:
         working-directory: ./frontend/
         run: |
           npm i
-          
+
       - name: create ./frontend/dist dir
         run: mkdir -p ./frontend/dist
 
