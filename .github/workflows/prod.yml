@@ -119,7 +119,7 @@ jobs:
           path: .
 
       - name: list contents (for verification)
-        run: ls -R
+        run: ls -laR
 
       - uses: shuttle-hq/deploy-action@main
         with:
