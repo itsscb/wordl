@@ -42,6 +42,7 @@ jobs:
         working-directory: ./frontend/
         run: |
           cargo test
+
       - name: cache trunk
         uses: actions/cache@v4
         with:
@@ -79,16 +80,15 @@ jobs:
       #     name: frontend-artifacts
       #     path: ./frontend/dist
 
-
-      - name: package project
-        run: |
-          tar -czf project.tar.gz --warning=no-file-changed --ignore-failed-read --exclude='.git' --exclude='target' .
-
       - name: upload packaged project
         uses: actions/upload-artifact@v4
         with:
           name: packaged-wordl
-          path: wordl.tar.gz
+          path: |
+            .
+            !.git/**
+            !target/**
+            !frontend/target/**
 
   deploy:
     runs-on: ubuntu-latest
@@ -116,9 +116,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: packaged-project
-
-      - name: extract project
-        run: tar -xzf project.tar.gz
+          path: .
 
       - name: list contents (for verification)
         run: ls -R
