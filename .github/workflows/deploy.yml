@@ -2,9 +2,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
 
 permissions:
   contents: write
@@ -41,15 +38,15 @@ jobs:
       - name: add rust target wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
   
-      # - name: run frontend tests
-      #   working-directory: ./frontend/
-      #   run: |
-      #     cargo test
+      - name: run frontend tests
+        working-directory: ./frontend/
+        run: |
+          cargo test
 
-      # - name: run backend tests
-      #   working-directory: .
-      #   run: |
-      #     cargo test
+      - name: run backend tests
+        working-directory: .
+        run: |
+          cargo test
             
       - name: install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
@@ -117,7 +114,7 @@ jobs:
         run: |
           git add frontend/dist -f
           git add .gitignore
-          git commit -m "[${{github.run_id }}] #${{ github.event.pull_request.number}} ${{ github.event.pull_request.title}}" -m "${{ github.repository }}@${{ github.event.pull_request.head.sha}}" -m "pushed by ${{github.event.pusher}}" || echo "No changes to commit"
+          git commit -m "[${{github.run_attempt }}] ${{github.event.pusher}} > ${{ github.repository }}@${{ github.event.head_commit}}" || echo "No changes to commit"
 
       - name: List downloaded artifacts
         run: ls -laR ./frontend/dist
