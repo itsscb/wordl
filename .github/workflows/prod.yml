@@ -97,6 +97,6 @@ jobs:
 
       - uses: shuttle-hq/deploy-action@main
         with:
-          allow-dirty: "true"
+          # allow-dirty: "true"
           deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
           working-directory: .
