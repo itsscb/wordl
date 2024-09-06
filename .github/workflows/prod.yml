@@ -41,7 +41,7 @@ jobs:
       - name: run frontend tests
         working-directory: ./frontend/
         run: |
-          cargo test --verbose
+          cargo test
       - name: cache trunk
         uses: actions/cache@v4
         with:
@@ -82,7 +82,7 @@ jobs:
 
       - name: package project
         run: |
-          tar -czf project.tar.gz --exclude='.git' --exclude='target' .
+          tar -czf project.tar.gz --warning=no-file-changed --ignore-failed-read --exclude='.git' --exclude='target' .
 
       - name: upload packaged project
         uses: actions/upload-artifact@v4
