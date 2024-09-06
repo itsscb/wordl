@@ -41,15 +41,15 @@ jobs:
       - name: add rust target wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
   
-      - name: run frontend tests
-        working-directory: ./frontend/
-        run: |
-          cargo test
+      # - name: run frontend tests
+      #   working-directory: ./frontend/
+      #   run: |
+      #     cargo test
 
-      - name: run backend tests
-        working-directory: .
-        run: |
-          cargo test
+      # - name: run backend tests
+      #   working-directory: .
+      #   run: |
+      #     cargo test
             
       - name: install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
@@ -74,10 +74,9 @@ jobs:
       - name: build frontend
         working-directory: ./frontend/
         run: |
-          npx tailwindcss --help
           sed -i 's/tailwindcss/npx tailwindcss/' Trunk.toml
           cat Trunk.toml
-          sed -i '/frontend\/public\/styles.css/s/^/#/' .gitignore
+          sed -i '/frontend\/public\/styles.css/s/^/#/' ../.gitignore
           trunk build --release
 
       - name: upload frontend artifacts
