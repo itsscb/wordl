@@ -30,11 +30,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/
+            ~/.cargo/registry
+            ~/.cargo/git
             ~/.cargo/bin/
             target/
             node_modules/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
           
       - name: run frontend tests
@@ -114,6 +115,12 @@ jobs:
         with:
           name: repo-with-frontend
           path: .
+    
+      - name: initialize git repository
+        run: |
+          git init
+          git add .
+          git commit -m "Initial commit for deployment"
 
       - name: setup git
         run: |
