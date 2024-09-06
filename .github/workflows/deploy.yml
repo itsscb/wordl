@@ -44,19 +44,13 @@ jobs:
         working-directory: ./frontend/
         run: |
           cargo test
-          
-      - name: install trunk
-        run: cargo install trunk || echo "trunk already installed"
+      - name: install cargo-binstall
+        uses: cargo-bins/cargo-binstall@main
 
-      - name: install node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: install tailwindcss
-        working-directory: ./frontend/
-        run: npm i
-
+      - name: install trunk & tailwindcss
+        run: |
+          cargo binstall trunk tailwindcss
+        
       - name: create ./frontend/dist dir
         run: mkdir -p ./frontend/dist
 
