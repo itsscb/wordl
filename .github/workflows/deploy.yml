@@ -26,6 +26,7 @@ jobs:
             ~/.cargo/bin/
             ~/.cache/trunk/
             frontend/target/
+            frontend/node_modules/
             target/
             node_modules/
           key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock', '~/.cargo/bin/trunk', '**/rust-toolchain.toml', '**/rust-toolchain') }}
@@ -66,8 +67,7 @@ jobs:
         working-directory: ./frontend/
         run: |
           npm i -D
-          echo 'alias tailwindcss="npx tailwindcss"' >> $GITHUB_ENV
-          source $GITHUB_ENV
+          alias tailwindcss="npx tailwindcss"
 
       - name: create ./frontend/dist dir
         run: mkdir -p ./frontend/dist
