@@ -74,7 +74,8 @@ jobs:
       - name: build frontend
         working-directory: ./frontend/
         run: |
-          sed -i 's/tailwindcss/npx tailwindcss/' Trunk.toml
+          sed -i 's/tailwindcss/npx/' Trunk.toml
+          sed -i 's/command_arguments = [/command_arguments = ["tailwindcss"/' Trunk.toml
           cat Trunk.toml
           sed -i '/frontend\/public\/styles.css/s/^/#/' ../.gitignore
           trunk build --release
