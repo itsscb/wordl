@@ -30,11 +30,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/
-            ~/.cargo/bin/
+            ~/.cargo/registry
             target/
             node_modules/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
           
       - name: run frontend tests
@@ -108,6 +107,5 @@ jobs:
 
       - uses: shuttle-hq/deploy-action@main
         with:
-          # allow-dirty: "true"
           deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
           working-directory: .
