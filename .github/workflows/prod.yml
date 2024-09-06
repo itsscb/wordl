@@ -2,6 +2,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: write
@@ -54,13 +57,16 @@ jobs:
       - name: install tailwindcss
         run: npm install -g tailwindcss
 
+      - name: create ./frontend/dist dir
+        run: mkdir -p ./frontend/dist
+
       - name: build frontend
         working-directory: ./frontend/
         run: |
           trunk build --release
 
-      - name: list frontend dir (pre upload) [DEBUG]
-        run: ls -la ./frontend/dist
+      # - name: list frontend dir (pre upload) [DEBUG]
+      #   run: ls -la ./frontend/dist
 
       - name: upload frontend artifacts
         uses: actions/upload-artifact@v4
@@ -83,6 +89,9 @@ jobs:
         run: |
           rm -rf ./frontend/dist
 
+      - name: create ./frontend/dist dir
+        run: mkdir -p ./frontend/dist
+  
       - name: download frontend artifacts
         uses: actions/download-artifact@v4
         with:
@@ -94,6 +103,6 @@ jobs:
 
       - uses: shuttle-hq/deploy-action@main
         with:
-          allow-dirty: "true"
+          # allow-dirty: "true"
           deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
           working-directory: .
