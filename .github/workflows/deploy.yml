@@ -44,6 +44,12 @@ jobs:
         working-directory: ./frontend/
         run: |
           cargo test
+
+      - name: run backend tests
+        working-directory: .
+        run: |
+          cargo test
+            
       - name: install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
 
@@ -59,7 +65,9 @@ jobs:
       - name: install tailwindcss
         working-directory: ./frontend/
         run: |
-          npm i
+          npm i -D
+          echo 'alias tailwindcss="npx tailwindcss"' >> $GITHUB_ENV
+          source $GITHUB_ENV
 
       - name: create ./frontend/dist dir
         run: mkdir -p ./frontend/dist
