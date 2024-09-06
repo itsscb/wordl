@@ -47,10 +47,20 @@ jobs:
       - name: install cargo-binstall
         uses: cargo-bins/cargo-binstall@main
 
-      - name: install trunk & tailwindcss
+      - name: install trunk
         run: |
-          cargo binstall trunk tailwindcss
-        
+          cargo binstall trunk
+
+      - name: install node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: install tailwindcss
+        working-directory: ./frontend/
+        run: |
+          npm i
+          
       - name: create ./frontend/dist dir
         run: mkdir -p ./frontend/dist
 
