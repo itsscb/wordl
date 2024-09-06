@@ -32,7 +32,6 @@ jobs:
           path: |
             ~/.cargo/
             ~/.cargo/bin/
-            ~/.cargo/registry/
             frontend/target/
             target/
             node_modules/
