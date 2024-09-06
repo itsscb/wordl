@@ -74,7 +74,7 @@ jobs:
       - name: build frontend
         working-directory: ./frontend/
         run: |
-          sed -i '/tailwindcss/s/^/npx\ /' Trunk.toml
+          sed -i 's/tailwindcss/npx tailwindcss/' Trunk.toml
           cat Trunk.toml
           trunk build --release
 
