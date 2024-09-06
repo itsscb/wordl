@@ -74,8 +74,10 @@ jobs:
       - name: build frontend
         working-directory: ./frontend/
         run: |
+          npx tailwindcss --help
           sed -i 's/tailwindcss/npx tailwindcss/' Trunk.toml
           cat Trunk.toml
+          sed -i '/frontend\/public\/styles.css/s/^/#/' .gitignore
           trunk build --release
 
       - name: upload frontend artifacts
