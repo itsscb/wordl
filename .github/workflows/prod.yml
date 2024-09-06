@@ -122,13 +122,17 @@ jobs:
       - name: initialize git repository
         run: |
           git init
-          git add .
-          git commit -m "Initial commit for deployment"
-
+          
       - name: setup git
         run: |
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions"
+          
+      - name: initial git commit
+        run: |
+          git add .
+          git commit -m "Initial commit for deployment"
+          
       # - name: checkout
       #   uses: actions/checkout@v4
 
