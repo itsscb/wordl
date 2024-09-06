@@ -74,7 +74,7 @@ jobs:
       - name: build frontend
         working-directory: ./frontend/
         run: |
-          alias tailwindcss="npx tailwindcss"
+          sed -i '/tailwindcss/s/^/npx /' Trunk.toml
           trunk build --release
 
       - name: upload frontend artifacts
