@@ -26,15 +26,7 @@ jobs:
       - name: add rust target wasm32-unknown-unknown
         run: rustup target add wasm32-unknown-unknown
 
-      - name: cache trunk
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/trunk
-            ~/.cache/trunk/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('~/.cargo/bin/trunk') }}
-          restore-keys: ${{ runner.os }}-trunk
-
+        
       - name: cache dependencies
         uses: actions/cache@v4
         with:
@@ -45,7 +37,20 @@ jobs:
             node_modules/
           key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
-      
+          
+      - name: run frontend tests
+        working-directory: ./frontend/
+        run: |
+          cargo test --verbose
+      - name: cache trunk
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/trunk
+            ~/.cache/trunk/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('~/.cargo/bin/trunk') }}
+          restore-keys: ${{ runner.os }}-trunk
+          
       - name: install trunk
         run: cargo install trunk
 
@@ -68,38 +73,55 @@ jobs:
       # - name: list frontend dir (pre upload) [DEBUG]
       #   run: ls -la ./frontend/dist
 
-      - name: upload frontend artifacts
+      # - name: upload frontend artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: frontend-artifacts
+      #     path: ./frontend/dist
+
+
+      - name: package project
+        run: |
+          tar -czf project.tar.gz --exclude='.git' --exclude='target' .
+
+      - name: upload packaged project
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-artifacts
-          path: ./frontend/dist
-
-      - name: run tests
-        run: |
-          cargo test --verbose
+          name: packaged-wordl
+          path: wordl.tar.gz
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
+      # - name: checkout
+      #   uses: actions/checkout@v4
 
-      - name: remove ./frontend/dist dir
-        run: |
-          rm -rf ./frontend/dist
+      # - name: remove ./frontend/dist dir
+      #   run: |
+      #     rm -rf ./frontend/dist
 
-      - name: create ./frontend/dist dir
-        run: mkdir -p ./frontend/dist
+      # - name: create ./frontend/dist dir
+      #   run: mkdir -p ./frontend/dist
   
-      - name: download frontend artifacts
+      # - name: download frontend artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: frontend-artifacts
+      #     path: ./frontend/dist
+
+      # - name: List downloaded artifacts
+      #   run: ls -la ./frontend/dist
+      - name: download packaged project
         uses: actions/download-artifact@v4
         with:
-          name: frontend-artifacts
-          path: ./frontend/dist
+          name: packaged-project
 
-      - name: List downloaded artifacts
-        run: ls -la ./frontend/dist
+      - name: extract project
+        run: tar -xzf project.tar.gz
+
+      - name: list contents (for verification)
+        run: ls -R
 
       - uses: shuttle-hq/deploy-action@main
         with:
