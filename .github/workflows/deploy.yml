@@ -26,7 +26,7 @@ jobs:
             frontend/node_modules/
             target/
             node_modules/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock', '~/.cargo/bin/trunk', '**/rust-toolchain.toml', '**/rust-toolchain') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock', '~/.cargo/bin/trunk', './frontend/package-lock.json') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
 
       - name: install rust
