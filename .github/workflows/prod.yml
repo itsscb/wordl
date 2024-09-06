@@ -54,8 +54,8 @@ jobs:
       - name: install tailwindcss
         run: npm install -g tailwindcss
 
-      - name: list frontend dir (pre build) [DEBUG]
-        run: ls -la ./frontend/dist
+      # - name: list frontend dir (pre build) [DEBUG]
+      #   run: ls -la ./frontend/dist
 
       - name: build frontend
         working-directory: ./frontend/
