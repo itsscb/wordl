@@ -108,7 +108,7 @@ jobs:
         run: |
           git add frontend/dist -f
           git add .gitignore
-          git commit -m "#${{ github.event.pull_request.number}} ${{ github.event.pull_request.title}}" -m "${{ github.repository }}@${{ github.event.pull_request.head.sha}}" -m "pushed by ${{github.event.pusher}}" || echo "No changes to commit"
+          git commit -m "[${{github.event.number }}] #${{ github.event.pull_request.number}} ${{ github.event.pull_request.title}}" -m "${{ github.repository }}@${{ github.event.pull_request.head.sha}}" -m "pushed by ${{github.event.pusher}}" || echo "No changes to commit"
 
       - name: List downloaded artifacts
         run: ls -laR ./frontend/dist
