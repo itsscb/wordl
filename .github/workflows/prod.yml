@@ -69,88 +69,42 @@ jobs:
         working-directory: ./frontend/
         run: |
           trunk build --release
-      
+
+      - name: upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifacts
+          path: ./frontend/dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:          
+      - name: checkout
+        uses: actions/checkout@v4
+
       - name: setup git
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
+
+      - name: remove ./frontend/dist dir
+        run: |
+          rm -rf ./frontend/dist
+  
+      - name: download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-artifacts
+          path: ./frontend/dist
   
       - name: commit frontend build
         run: |
           git add frontend/dist -f
           git commit -m "Add frontend build for deployment" || echo "No changes to commit"
 
-      - name: upload git repo
-        uses: actions/upload-artifact@v4
-        with:
-          name: repo-with-frontend
-          path: |
-            **/*
-            !debug/**
-            !target/**
-            !frontend/target/**
-
-      # - name: list frontend dir (pre upload) [DEBUG]
-      #   run: ls -la ./frontend/dist
-
-      # - name: upload frontend artifacts
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: frontend-artifacts
-      #     path: ./frontend/dist
-
-      # - name: upload packaged project
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: packaged-wordl
-      #     path: |
-      #       .
-      #       !.git/**
-      #       !target/**
-      #       !frontend/target/**
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: download repo with frontend
-        uses: actions/download-artifact@v4
-        with:
-          name: repo-with-frontend
-          path: .
-    
-      - name: initialize git repository
-        run: |
-          git init
-          
-      - name: setup git
-        run: |
-          git config --local user.email "github-actions@github.com"
-          git config --local user.name "GitHub Actions"
-          
-      - name: initial git commit
-        run: |
-          git add .
-          git commit -m "Initial commit for deployment"
-          
-      # - name: checkout
-      #   uses: actions/checkout@v4
-
-      # - name: remove ./frontend/dist dir
-      #   run: |
-      #     rm -rf ./frontend/dist
-
-      # - name: create ./frontend/dist dir
-      #   run: mkdir -p ./frontend/dist
-  
-      # - name: download frontend artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: frontend-artifacts
-      #     path: ./frontend/dist
-
       - name: List downloaded artifacts
-        run: ls -la ./frontend/dist
+        run: ls -laR ./frontend/dist
 
       - uses: shuttle-hq/deploy-action@main
         with:
