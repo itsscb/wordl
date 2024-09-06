@@ -115,7 +115,7 @@ jobs:
       - name: download packaged project
         uses: actions/download-artifact@v4
         with:
-          name: packaged-project
+          name: packaged-wordl
           path: .
 
       - name: list contents (for verification)
