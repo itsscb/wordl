@@ -30,7 +30,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/registry
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            frontend/target/
             target/
             node_modules/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
@@ -97,9 +99,14 @@ jobs:
           name: frontend-artifacts
           path: ./frontend/dist
   
+      - name: remove ./frontend/dist from .gitignore
+        run: |
+          sed -i '/frontend\/dist\//s/^/#/' .gitignore
+
       - name: commit frontend build
         run: |
           git add frontend/dist -f
+          git add .gitignore
           git commit -m "Add frontend build for deployment" || echo "No changes to commit"
 
       - name: List downloaded artifacts
