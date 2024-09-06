@@ -18,7 +18,10 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
+        
+      - name: add rust target wasm32-unknown-unknown
+        run: rustup target add wasm32-unknown-unknown
 
       - name: cache trunk
         uses: actions/cache@v4
@@ -39,9 +42,6 @@ jobs:
             node_modules/
           key: ${{ runner.os }}-cargo-${{ hashFiles('./Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-wordl
-          
-      - name: add rust target wasm32-unknown-unknown
-        run: rustup target add wasm32-unknown-unknown
       
       - name: install trunk
         run: cargo install trunk
@@ -53,9 +53,6 @@ jobs:
 
       - name: install tailwindcss
         run: npm install -g tailwindcss
-
-      # - name: list frontend dir (pre build) [DEBUG]
-      #   run: ls -la ./frontend/dist
 
       - name: build frontend
         working-directory: ./frontend/
@@ -97,6 +94,6 @@ jobs:
 
       - uses: shuttle-hq/deploy-action@main
         with:
-          # allow-dirty: "true"
+          allow-dirty: "true"
           deploy-key: ${{ secrets.SHUTTLE_API_KEY }}
           working-directory: .
