@@ -36,7 +36,6 @@ jobs:
           profile: minimal
           toolchain: nightly
           
-      - name: run frontend tests
-        working-directory: ./frontend/
+      - name: run tests
         run: |
-          cargo test
+          cargo test --workspace
