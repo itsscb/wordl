@@ -28,6 +28,8 @@
             tailwindcss
             cargo-shuttle
             cargo-edit
+            cargo-binstall
+            bacon
 
             openssl
             pkg-config

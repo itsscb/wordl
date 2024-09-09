@@ -7,6 +7,7 @@ edition = "2021"
 axum = "0.7.5"
 http = "1.1.0"
 rand = "0.8.5"
+serde = { version = "1.0.210", features = ["derive"] }
 shuttle-axum = "0.47.0"
 shuttle-runtime = "0.47.0"
 tower-http = { version = "0.5.2", features = ["compression-br", "compression-gzip", "cors", "fs"] }
@@ -15,3 +16,10 @@ tracing = "0.1.40"
 
 [workspace]
 members = [".", "frontend"]
+
+[dev-dependencies]
+rand = "0.8.5"
+
+[profile.release.package.wordl-frontend]
+opt-level = "z"
+strip = true
