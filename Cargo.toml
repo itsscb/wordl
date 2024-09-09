@@ -19,3 +19,7 @@ members = [".", "frontend"]
 
 [dev-dependencies]
 rand = "0.8.5"
+
+[profile.release.package.wordl-frontend]
+opt-level = "z"
+strip = true
