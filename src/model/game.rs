@@ -1,24 +1,22 @@
 use super::charstatus::{compare_strings, CharStatus};
 use serde::{Deserialize, Serialize};
 
-type Tries = usize;
-
-const MAX_TRIES: Tries = 5;
+type Attempts = usize;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Game {
-    pub word: Option<String>,
-    pub submitted_words: Vec<Vec<CharStatus<String>>>,
-    tries: Tries,
+    word: Option<String>,
+    submitted_words: Vec<Vec<CharStatus<String>>>,
+    max_attempts: Attempts,
     status: Status,
 }
 
 impl Game {
     #[must_use]
-    pub const fn new() -> Self {
+    pub const fn new(max_attempts: Attempts) -> Self {
         Self {
             word: None,
-            tries: 0,
+            max_attempts,
             submitted_words: Vec::new(),
             status: Status::New,
         }
@@ -35,7 +33,6 @@ impl Game {
         if let Some(ref word) = self.word {
             let res = compare_strings(word, &answer.to_uppercase());
             self.submitted_words.push(res);
-            self.tries += 1;
             self.status = self.current_status();
         }
     }
@@ -44,24 +41,16 @@ impl Game {
     pub fn current_status(&self) -> Status {
         self.word.as_ref().map_or(Status::New, |_| {
             let word_count = self.submitted_words.len();
-            match self.tries {
+            match word_count {
                 0 => Status::New,
-                1..MAX_TRIES => self
-                    .submitted_words
-                    .last()
-                    .map_or(Status::InProgress, |words| {
-                        if words.iter().all(|v| matches!(v, CharStatus::Match(_))) {
-                            Status::Win(word_count)
-                        } else {
-                            Status::InProgress
-                        }
-                    }),
-                _ => self
+                i => self
                     .submitted_words
                     .last()
                     .map_or(Status::Lose(word_count), |words| {
                         if words.iter().all(|v| matches!(v, CharStatus::Match(_))) {
                             Status::Win(word_count)
+                        } else if i < self.max_attempts {
+                            Status::InProgress
                         } else {
                             Status::Lose(word_count)
                         }
@@ -73,7 +62,7 @@ impl Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Self::new()
+        Self::new(5)
     }
 }
 
@@ -81,8 +70,8 @@ impl Default for Game {
 #[allow(clippy::module_name_repetitions)]
 pub enum Status {
     New,
-    Win(Tries),
-    Lose(Tries),
+    Win(Attempts),
+    Lose(Attempts),
     InProgress,
 }
 
@@ -96,29 +85,35 @@ mod test {
         assert_eq!(
             Game {
                 word: None,
-                tries: 0,
+                max_attempts: 5,
                 submitted_words: Vec::new(),
                 status: Status::New,
             },
-            Game::new()
+            Game::default()
         );
     }
 
     #[test]
+    #[allow(clippy::field_reassign_with_default)]
     fn start() {
         let word: String = random_word(5);
 
         let want = Game {
             word: Some(word.to_uppercase()),
             submitted_words: Vec::new(),
-            tries: 0,
+            max_attempts: 5,
             status: Status::InProgress,
         };
 
-        let mut got = Game::new();
+        let mut got = Game::default();
         got.start(&word);
 
         assert_eq!(got, want);
+
+        let mut got = Game::default();
+
+        got.word = Some(word.to_uppercase());
+        assert_ne!(got, want);
     }
 
     #[test]
@@ -132,11 +127,11 @@ mod test {
                 &word.to_uppercase(),
                 &answer.to_uppercase(),
             )],
-            tries: 1,
+            max_attempts: 5,
             status: Status::InProgress,
         };
 
-        let mut got = Game::new();
+        let mut got = Game::default();
         got.start(word);
         got.submit_answer(answer);
 
@@ -145,7 +140,7 @@ mod test {
 
     #[test]
     fn current_status() {
-        let mut got = Game::new();
+        let mut got = Game::default();
 
         assert_eq!(got.current_status(), Status::New);
 
@@ -154,7 +149,7 @@ mod test {
         let want = Game {
             word: Some(word.to_uppercase()),
             submitted_words: Vec::new(),
-            tries: 0,
+            max_attempts: 5,
             status: Status::InProgress,
         };
         got.start(word);
@@ -168,7 +163,7 @@ mod test {
                 &word.to_uppercase(),
                 &answer.to_uppercase(),
             )],
-            tries: 1,
+            max_attempts: 5,
             status: Status::InProgress,
         };
         got.submit_answer(answer);
@@ -180,12 +175,12 @@ mod test {
         got.submit_answer(answer);
         assert_eq!(got.current_status(), Status::Lose(5));
 
-        let mut got = Game::new();
+        let mut got = Game::default();
         got.start(word);
         got.submit_answer(word);
         assert_eq!(got.current_status(), Status::Win(1));
 
-        let mut got = Game::new();
+        let mut got = Game::default();
         got.start(word);
         got.submit_answer(answer);
         got.submit_answer(answer);
