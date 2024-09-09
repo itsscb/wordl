@@ -1,3 +1,3 @@
 mod model;
 
-pub use model::game;
+pub use model::game::Game;

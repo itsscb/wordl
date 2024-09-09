@@ -3,6 +3,15 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+pub struct Word(Vec<CharStatus<String>>);
+
+impl Word {
+    pub fn chars(&self) -> Vec<CharStatus<String>> {
+        self.0.clone()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 pub enum CharStatus<T> {
     NotContained(T),
     Contained(T),
@@ -10,7 +19,7 @@ pub enum CharStatus<T> {
     Unknown,
 }
 
-pub(super) fn compare_strings(s1: &str, s2: &str) -> Vec<CharStatus<String>> {
+pub(super) fn compare_strings(s1: &str, s2: &str) -> Word {
     let mut result: Vec<CharStatus<String>> = Vec::with_capacity(s1.len());
     result.resize_with(s1.len(), || CharStatus::Unknown);
 
@@ -44,7 +53,7 @@ pub(super) fn compare_strings(s1: &str, s2: &str) -> Vec<CharStatus<String>> {
         }
     }
 
-    result
+    Word(result)
 }
 
 #[cfg(test)]
@@ -55,74 +64,74 @@ mod test {
     fn test_compare_strings() {
         let source = "HALLO";
 
-        let want = vec![
+        let want = Word(vec![
             CharStatus::NotContained("0".to_owned()),
             CharStatus::NotContained("0".to_owned()),
             CharStatus::NotContained("0".to_owned()),
             CharStatus::NotContained("0".to_owned()),
             CharStatus::NotContained("0".to_owned()),
-        ];
+        ]);
         let input = "00000";
 
         let got = compare_strings(source, input);
         assert_eq!(want, got);
         let source = "HALLO";
 
-        let want = vec![
+        let want = Word(vec![
             CharStatus::NotContained("L".to_owned()),
             CharStatus::NotContained("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::NotContained("L".to_owned()),
-        ];
+        ]);
         let input = "LLLLL";
 
         let got = compare_strings(source, input);
         assert_eq!(want, got);
 
-        let want = vec![
+        let want = Word(vec![
             CharStatus::Match("H".to_owned()),
             CharStatus::Match("A".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::Match("O".to_owned()),
-        ];
+        ]);
         let input = "HALLO";
 
         let got = compare_strings(source, input);
         assert_eq!(want, got);
 
-        let want = vec![
+        let want = Word(vec![
             CharStatus::Match("H".to_owned()),
             CharStatus::NotContained("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::Match("O".to_owned()),
-        ];
+        ]);
         let input = "HLLLO";
 
         let got = compare_strings(source, input);
         assert_eq!(want, got);
 
-        let want = vec![
+        let want = Word(vec![
             CharStatus::Match("H".to_owned()),
             CharStatus::Contained("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::NotContained("I".to_owned()),
             CharStatus::NotContained("L".to_owned()),
-        ];
+        ]);
         let input = "HLLIL";
 
         let got = compare_strings(source, input);
         assert_eq!(want, got);
 
-        let want = vec![
+        let want = Word(vec![
             CharStatus::Contained("L".to_owned()),
             CharStatus::NotContained("L".to_owned()),
             CharStatus::Match("L".to_owned()),
             CharStatus::Contained("A".to_owned()),
             CharStatus::Match("O".to_owned()),
-        ];
+        ]);
         let input = "LLLAO";
 
         let got = compare_strings(source, input);

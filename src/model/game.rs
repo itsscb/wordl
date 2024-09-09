@@ -1,4 +1,4 @@
-use super::charstatus::{compare_strings, CharStatus};
+use super::charstatus::{compare_strings, CharStatus, Word};
 use serde::{Deserialize, Serialize};
 
 type Attempts = usize;
@@ -6,7 +6,7 @@ type Attempts = usize;
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Game {
     word: Option<String>,
-    submitted_words: Vec<Vec<CharStatus<String>>>,
+    submitted_words: Vec<Word>,
     max_attempts: Attempts,
     status: Status,
 }
@@ -47,7 +47,11 @@ impl Game {
                     .submitted_words
                     .last()
                     .map_or(Status::Lose(word_count), |words| {
-                        if words.iter().all(|v| matches!(v, CharStatus::Match(_))) {
+                        if words
+                            .chars()
+                            .iter()
+                            .all(|v| matches!(v, CharStatus::Match(_)))
+                        {
                             Status::Win(word_count)
                         } else if i < self.max_attempts {
                             Status::InProgress
@@ -57,6 +61,11 @@ impl Game {
                     }),
             }
         })
+    }
+
+    #[must_use]
+    pub fn get_submitted_words(&self) -> Vec<Word> {
+        self.submitted_words.clone()
     }
 }
 
@@ -186,6 +195,22 @@ mod test {
         got.submit_answer(answer);
         got.submit_answer(word);
         assert_eq!(got.current_status(), Status::Win(3));
+    }
+
+    #[test]
+    fn get_submitted_words() {
+        let word = "hallo";
+        let answer = "hello";
+        let mut got = Game::default();
+        got.start(word);
+        got.submit_answer(answer);
+
+        let want = vec![compare_strings(
+            &word.to_uppercase(),
+            &answer.to_uppercase(),
+        )];
+
+        assert_eq!(got.get_submitted_words(), want);
     }
 
     fn random_word(len: usize) -> String {

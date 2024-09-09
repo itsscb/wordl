@@ -2856,6 +2856,7 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+ "wordl",
  "yew",
  "yew-router",
  "yewdux",
