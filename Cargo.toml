@@ -16,3 +16,6 @@ tracing = "0.1.40"
 
 [workspace]
 members = [".", "frontend"]
+
+[dev-dependencies]
+rand = "0.8.5"
